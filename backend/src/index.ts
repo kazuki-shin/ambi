@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import connectDB from './db/connect'; // Import the DB connection function
 import { initializePinecone } from './clients/pineconeClient'; // Import Pinecone initializer
 import { initializeRedis } from './clients/redisClient'; // Import Redis initializer
+import { getClaudeResponse } from './clients/claudeClient'; // Import Claude client function
 
 dotenv.config();
 
@@ -36,23 +37,17 @@ app.get('/health', (_req: Request, res: Response) => { // Added types
 });
 
 // Refined conversation endpoint
-app.post('/api/conversation', (req: Request, res: Response) => {
+app.post('/api/conversation', async (req: Request, res: Response) => { // Made async
   const { message, userId, sessionId } = req.body as ConversationRequest;
 
   console.log(`Received message: "${message}" from user: ${userId || 'unknown'} in session: ${sessionId || 'unknown'}`);
 
-  // --- TODO: Phase 3 - Integrate with Claude API ---
-  // 1. Fetch relevant context/memory based on userId/sessionId (using LangChain/Pinecone stubs later)
-  // 2. Construct prompt for Claude
-  // 3. Call Claude API
-  // 4. Process response
-  // 5. Update memory/context (using LangChain/Pinecone stubs later)
-  // ---
+  // --- Phase 1: Basic Claude Integration ---
+  const ambiReply = await getClaudeResponse(message /*, userId, sessionId */);
+  // --- TODO: Phase 3 - Add context/memory retrieval before calling Claude ---
+  // --- TODO: Phase 3 - Add memory update after getting response ---
 
-  // For Phase 1, return a simple echo or predefined response
-  const reply = `Received: "${message}". Ambi's response stub.`;
-
-  const response: ConversationResponse = { reply };
+  const response: ConversationResponse = { reply: ambiReply }; // Use Claude's reply
   res.json(response);
 });
 
