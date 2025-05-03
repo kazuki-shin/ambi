@@ -1,2 +1,6 @@
 # Private individual user cursor rules
 .cursor/rules/_*.mdc
+
+node_modules/
+.env
+.DS_Store
