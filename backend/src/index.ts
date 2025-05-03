@@ -5,6 +5,7 @@ import connectDB from './db/connect'; // Import the DB connection function
 import { initializePinecone } from './clients/pineconeClient'; // Import Pinecone initializer
 import { initializeRedis } from './clients/redisClient'; // Import Redis initializer
 import { getClaudeResponse } from './clients/claudeClient'; // Import Claude client function
+import { addMessagePair, getHistory } from './services/memoryService'; // Import memory service functions
 
 dotenv.config();
 
@@ -29,6 +30,7 @@ interface ConversationRequest {
 // Basic response structure interface (optional)
 interface ConversationResponse {
   reply: string;
+  // sessionId?: string; // Removing optional sessionId used for testing
   // Add other fields as needed, e.g., emotion, confidence
 }
 
@@ -37,17 +39,30 @@ app.get('/health', (_req: Request, res: Response) => { // Added types
 });
 
 // Refined conversation endpoint
-app.post('/api/conversation', async (req: Request, res: Response) => { // Made async
+app.post('/api/conversation', async (req: Request, res: Response) => {
   const { message, userId, sessionId } = req.body as ConversationRequest;
 
-  console.log(`Received message: "${message}" from user: ${userId || 'unknown'} in session: ${sessionId || 'unknown'}`);
+  // Ensure we have a session ID for memory (generate one if missing - basic example)
+  // In a real app, session management would be more robust
+  const currentSessionId = sessionId || `session_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+
+  console.log(`Received message: "${message}" from user: ${userId || 'unknown'} in session: ${currentSessionId}`);
+
+  // --- TODO: Phase 3 - Retrieve and use history/context before calling Claude ---
+  const history = getHistory(currentSessionId); // Retrieve history (not used in call yet)
+  // Example: Pass history to getClaudeResponse in Phase 3
 
   // --- Phase 1: Basic Claude Integration ---
-  const ambiReply = await getClaudeResponse(message /*, userId, sessionId */);
-  // --- TODO: Phase 3 - Add context/memory retrieval before calling Claude ---
-  // --- TODO: Phase 3 - Add memory update after getting response ---
+  const ambiReply = await getClaudeResponse(message /*, history */); // Pass history in later phase
 
-  const response: ConversationResponse = { reply: ambiReply }; // Use Claude's reply
+  // --- Phase 1: Store message pair in memory stub ---
+  addMessagePair(currentSessionId, message, ambiReply);
+
+  const response: ConversationResponse = {
+    reply: ambiReply,
+    // Optionally include sessionId in response if it was generated
+    // sessionId: currentSessionId // Re-commenting after testing
+  };
   res.json(response);
 });
 
