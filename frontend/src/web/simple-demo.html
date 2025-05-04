@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ambi Voice Demo</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      background-color: #f5f5f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .container {
+      width: 100%;
+      max-width: 500px;
+      padding: 16px;
+    }
+    .card {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+    .card-title {
+      padding: 16px;
+      background-color: #6200ee;
+      color: white;
+      font-size: 20px;
+      font-weight: bold;
+    }
+    .card-content {
+      padding: 16px;
+    }
+    .status-container {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .status-label {
+      font-weight: bold;
+      margin-right: 8px;
+    }
+    .status-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 6px;
+      margin-right: 8px;
+      background-color: #6200ee;
+    }
+    .status-text {
+      font-weight: 500;
+    }
+    .response-container {
+      margin-bottom: 16px;
+    }
+    .response-label {
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+    .response-text {
+      min-height: 100px;
+      padding: 8px;
+      background-color: #f5f5f5;
+      border-radius: 4px;
+      white-space: pre-wrap;
+    }
+    .button-container {
+      display: flex;
+      justify-content: center;
+      margin-top: 16px;
+    }
+    .button {
+      width: 200px;
+      padding: 10px;
+      background-color: #6200ee;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    .recording-button {
+      background-color: #b00020;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="card-title">Ambi Voice Demo</div>
+      <div class="card-content">
+        <div class="status-container">
+          <span class="status-label">Status:</span>
+          <div id="status-indicator" class="status-indicator"></div>
+          <span id="status-text" class="status-text">Ready</span>
+        </div>
+        
+        <div class="response-container">
+          <div class="response-label">Response:</div>
+          <div id="response-text" class="response-text">No response yet</div>
+        </div>
+        
+        <div class="button-container">
+          <button id="record-button" class="button">Start Recording</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const statusIndicator = document.getElementById('status-indicator');
+      const statusText = document.getElementById('status-text');
+      const responseText = document.getElementById('response-text');
+      const recordButton = document.getElementById('record-button');
+      
+      let mediaRecorder;
+      let audioChunks = [];
+      let isRecording = false;
+      let sessionId;
+      let audioElement = new Audio();
+      
+      const setStatus = (status) => {
+        switch (status) {
+          case 'IDLE':
+            statusIndicator.style.backgroundColor = '#6200ee';
+            statusText.textContent = 'Ready';
+            break;
+          case 'LISTENING':
+            statusIndicator.style.backgroundColor = '#03dac6';
+            statusText.textContent = 'Listening...';
+            break;
+          case 'THINKING':
+            statusIndicator.style.backgroundColor = '#ff9800';
+            statusText.textContent = 'Thinking...';
+            break;
+          case 'SPEAKING':
+            statusIndicator.style.backgroundColor = '#03dac6';
+            statusText.textContent = 'Speaking...';
+            break;
+          case 'ERROR':
+            statusIndicator.style.backgroundColor = '#b00020';
+            statusText.textContent = 'Error';
+            break;
+        }
+      };
+      
+      const startRecording = async () => {
+        try {
+          audioChunks = [];
+          
+          if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            throw new Error('Browser does not support audio recording');
+          }
+          
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          
+          if (!window.MediaRecorder) {
+            throw new Error('Browser does not support MediaRecorder');
+          }
+          
+          mediaRecorder = new MediaRecorder(stream);
+          
+          mediaRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0) {
+              audioChunks.push(event.data);
+            }
+          };
+          
+          mediaRecorder.onstop = () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+            processVoiceMessage(audioBlob);
+            
+            stream.getTracks().forEach((track) => track.stop());
+          };
+          
+          setStatus('LISTENING');
+          isRecording = true;
+          recordButton.textContent = 'Stop Recording';
+          recordButton.classList.add('recording-button');
+          mediaRecorder.start();
+        } catch (error) {
+          console.error('Error starting recording:', error);
+          setStatus('ERROR');
+          responseText.textContent = `Error: ${error.message || 'Could not start recording'}`;
+        }
+      };
+      
+      const stopRecording = () => {
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+          mediaRecorder.stop();
+          isRecording = false;
+          recordButton.textContent = 'Start Recording';
+          recordButton.classList.remove('recording-button');
+        }
+      };
+      
+      const processVoiceMessage = async (audioBlob) => {
+        try {
+          responseText.textContent = '';
+          setStatus('THINKING');
+          recordButton.disabled = true;
+          
+          const url = sessionId 
+            ? `/api/voice-conversation?sessionId=${sessionId}`
+            : '/api/voice-conversation';
+          
+          const response = await fetch(url, {
+            method: 'POST',
+            body: audioBlob,
+            headers: {
+              'Content-Type': 'application/octet-stream'
+            }
+          });
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Server error');
+          }
+          
+          const data = await response.json();
+          
+          if (data.sessionId) {
+            sessionId = data.sessionId;
+          }
+          
+          responseText.textContent = data.textReply;
+          setStatus('SPEAKING');
+          
+          const audioUrl = `data:audio/mp3;base64,${data.audioReply}`;
+          audioElement.src = audioUrl;
+          audioElement.onended = () => {
+            setStatus('IDLE');
+            recordButton.disabled = false;
+          };
+          audioElement.play();
+        } catch (error) {
+          console.error('Error processing voice message:', error);
+          responseText.textContent = `Error: ${error.message || 'Could not process voice message'}`;
+          setStatus('ERROR');
+          recordButton.disabled = false;
+        }
+      };
+      
+      recordButton.addEventListener('click', () => {
+        if (isRecording) {
+          stopRecording();
+        } else {
+          startRecording();
+        }
+      });
+      
+      audioElement.onended = () => {
+        setStatus('IDLE');
+        recordButton.disabled = false;
+      };
+      
+      setStatus('IDLE');
+    });
+  </script>
+</body>
+</html>
