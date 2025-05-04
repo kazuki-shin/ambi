@@ -24,7 +24,7 @@ const anthropic = apiKey
  * @param messages - Array of LangChain BaseMessage objects.
  * @returns Array of Anthropic message objects.
  */
-const convertToAnthropicMessages = (messages: BaseMessage[]) => {
+const _convertToAnthropicMessages = (messages: BaseMessage[]) => {
   return messages.map(message => {
     if (message instanceof HumanMessage) {
       return { role: 'user', content: message.content as string };
@@ -88,11 +88,13 @@ export const getClaudeResponse = async (
       temperature: 0.7,
       system: systemPrompt,
       messages: anthropicMessages,
-    } as any);
+    } as Anthropic.MessageCreateParams);
 
     // Extract the text content from the response
     let responseText = 'Could not get a response text.'; // Default fallback
-    if (msg.content && msg.content.length > 0 && msg.content[0].type === 'text') {
+    if ('content' in msg && Array.isArray(msg.content) && msg.content.length > 0 && 
+        'type' in msg.content[0] && msg.content[0].type === 'text' && 
+        'text' in msg.content[0]) {
         responseText = msg.content[0].text;
     }
 
@@ -103,4 +105,4 @@ export const getClaudeResponse = async (
     console.error('Error communicating with Anthropic API:', error);
     return 'Sorry, I encountered an error trying to respond.';
   }
-};            
+};                  

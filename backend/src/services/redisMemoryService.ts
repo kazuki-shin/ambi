@@ -1,4 +1,4 @@
-import { BaseMessage, HumanMessage, AIMessage } from '@langchain/core/messages';
+import { BaseMessage, AIMessage } from '@langchain/core/messages';
 import { BaseMemory, InputValues, OutputValues, MemoryVariables } from '@langchain/core/memory';
 import { RedisChatMessageHistory } from '@langchain/community/stores/message/ioredis';
 import { getRedisClient } from '../clients/redisClient';

@@ -14,7 +14,7 @@ import { generateEmbedding } from './embeddingService';
 /**
  * Interface for memory entry metadata.
  */
-interface MemoryEntryMetadata {
+interface _MemoryEntryMetadata {
   sessionId: string;
   timestamp: number;
   role: 'human' | 'ai';
@@ -87,7 +87,7 @@ export class PineconeVectorMemory extends BaseMemory {
       }
       
       const messages: BaseMessage[] = relevantMatches.map(match => {
-        const metadata = match.metadata as Record<string, any>;
+        const metadata = match.metadata as Record<string, unknown>;
         const content = match.id.split(':')[1]; // Extract content from ID
         
         if (metadata && metadata.role === 'human') {
@@ -167,7 +167,7 @@ export class PineconeVectorMemory extends BaseMemory {
    */
   async clear(): Promise<void> {
     try {
-      const { deleteAllVectors } = require('../clients/pineconeClient');
+      const { deleteAllVectors } = await import('../clients/pineconeClient');
       await deleteAllVectors(this.namespace);
       console.log(`[PineconeMemoryService] Cleared all memories from namespace ${this.namespace}.`);
     } catch (error) {
@@ -181,7 +181,7 @@ export class PineconeVectorMemory extends BaseMemory {
  * @param sessionId - Optional session ID to associate with the memory.
  * @returns A PineconeVectorMemory instance.
  */
-export const createPineconeMemory = (sessionId?: string): PineconeVectorMemory => {
+export const createPineconeMemory = (_sessionId?: string): PineconeVectorMemory => {
   return new PineconeVectorMemory();
 };
 

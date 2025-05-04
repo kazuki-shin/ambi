@@ -1,7 +1,7 @@
 import { BaseMessage } from '@langchain/core/messages';
-import { createRedisMemory, addRedisMessagePair, getRedisHistory, clearRedisHistory } from './redisMemoryService';
-import { createPineconeMemory, PineconeVectorMemory } from './pineconeMemoryService';
-import { longTermMemoryConfig } from '../config/memoryConfig';
+import { addRedisMessagePair, getRedisHistory, clearRedisHistory } from './redisMemoryService';
+import { createPineconeMemory } from './pineconeMemoryService';
+import { } from '../config/memoryConfig';
 
 /**
  * Memory Manager Service
