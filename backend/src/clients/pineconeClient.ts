@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-let pinecone: Pinecone | null = null;
+const pinecone: Pinecone | null = null;
 
 /**
  * Initializes the Pinecone client.

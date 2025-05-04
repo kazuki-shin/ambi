@@ -42,7 +42,7 @@ app.post('/api/conversation', async (req: Request, res: Response) => {
   const { message, userId, sessionId } = req.body as ConversationRequest;
   const currentSessionId = sessionId || `session_${Date.now()}_${Math.random().toString(36).substring(7)}`;
   console.log(`Received message: "${message}" from user: ${userId || 'unknown'} in session: ${currentSessionId}`);
-  const history = getHistory(currentSessionId);
+  const _history = getHistory(currentSessionId);
   const ambiReply = await getClaudeResponse(message);
   addMessagePair(currentSessionId, message, ambiReply);
 

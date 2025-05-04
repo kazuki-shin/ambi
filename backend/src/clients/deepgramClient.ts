@@ -1,4 +1,4 @@
-import { createClient, DeepgramClient, LiveTranscriptionEvents } from '@deepgram/sdk';
+import { createClient, DeepgramClient } from '@deepgram/sdk';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -24,7 +24,7 @@ if (apiKey) {
  * @returns A Promise resolving to the transcription text or null if failed.
  */
 export const transcribeSpeech = async (
-  audioSource: any // Use 'any' for stub, define specific type later (e.g., Buffer)
+  _audioSource: unknown // Prefix unused param, change type from any
 ): Promise<string | null> => {
   if (!deepgramClient) {
     console.warn('Deepgram client not initialized (API key missing?). Cannot transcribe.');
