@@ -22,7 +22,8 @@ module.exports = {
         use: {
           loader: 'ts-loader',
           options: {
-            configFile: 'tsconfig.web.json'
+            configFile: 'tsconfig.web.json',
+            transpileOnly: true
           }
         },
         exclude: /node_modules/,
