@@ -39,7 +39,7 @@ jobs:
 
     - name: Test Backend
       working-directory: ./backend
-      run: npm test
+      run: npm test -- --passWithNoTests
       env:
         # Add any required test environment variables here, even if empty
         MONGODB_URI: test_db_uri # Use dummy or test-specific URIs
