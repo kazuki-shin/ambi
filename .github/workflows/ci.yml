@@ -40,6 +40,7 @@ jobs:
       env:
         # Add any required test environment variables here, even if empty
         # Use a syntactically valid placeholder URI for CI tests
+        NODE_ENV: test
         MONGODB_URI: mongodb://localhost:27017/test_db # Revert to placeholder
         REDIS_URL: redis://localhost:6379
         ANTHROPIC_API_KEY: dummy_key
@@ -73,4 +74,4 @@ jobs:
   #     - name: Install Frontend Dependencies
   #       working-directory: ./frontend
   #       run: npm ci
-  #     # Add lint/build steps for frontend if desired 
+  #     # Add lint/build steps for frontend if desired   

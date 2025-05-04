@@ -15,8 +15,10 @@ dotenv.config();
 connectDB();
 
 // Initialize External Clients
-initializeRedis();
-initializePinecone();
+if (process.env.NODE_ENV !== 'test') {
+  initializeRedis();
+  initializePinecone();
+}
 
 const app = express();
 app.use(cors());
@@ -78,4 +80,4 @@ if (require.main === module) {
   });
 }
 
-export default app; // Export the app instance for testing 
+export default app; // Export the app instance for testing   

@@ -23,6 +23,11 @@ export const initializePinecone = async () => {
     return null;
   }
 
+  if (process.env.NODE_ENV === 'test') {
+    console.log('Test environment detected. Skipping Pinecone connection.');
+    return null;
+  }
+
   console.log('Initializing Pinecone client (stub - no connection made)...');
   // In a real implementation:
   // pinecone = new Pinecone({ apiKey });
@@ -56,4 +61,4 @@ export const queryVector = async (/* params */) => {
   console.log('Querying vector from Pinecone (stub)...');
   // Add actual query logic here in later phases
   throw new Error('Pinecone queryVector function not implemented yet.');
-}; 
+};   

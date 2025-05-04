@@ -26,6 +26,11 @@ export const initializeRedis = () => {
     return null;
   }
 
+  if (process.env.NODE_ENV === 'test') {
+    console.log('Test environment detected. Skipping Redis connection.');
+    return null;
+  }
+
   try {
     console.log('Initializing Redis client...');
     redisClient = new Redis(redisUrl);
@@ -80,4 +85,4 @@ export const getRedisValue = async (key: string): Promise<string | null> => {
   }
   console.log(`Getting Redis key ${key} (stub)...`);
   return client.get(key);
-}; 
+};   
