@@ -26,13 +26,13 @@ import { getRedisClient } from '../clients/redisClient';
 
 jest.mock('@langchain/community/stores/message/ioredis', () => ({
   RedisChatMessageHistory: jest.fn().mockImplementation(() => ({
-    addUserMessage: jest.fn().mockResolvedValue(undefined),
-    addAIMessage: jest.fn().mockResolvedValue(undefined),
-    getMessages: jest.fn().mockResolvedValue([
+    addUserMessage: jest.fn().mockImplementation(() => Promise.resolve()),
+    addAIMessage: jest.fn().mockImplementation(() => Promise.resolve()),
+    getMessages: jest.fn().mockImplementation(() => Promise.resolve([
       new HumanMessage('Hello, how are you?'),
       new AIMessage('I am doing well, thank you for asking!')
-    ]),
-    clear: jest.fn().mockResolvedValue(undefined)
+    ])),
+    clear: jest.fn().mockImplementation(() => Promise.resolve())
   }))
 }));
 
@@ -88,6 +88,9 @@ describe('Redis Memory Service', () => {
     
     (memoryService.addMessagePair as jest.Mock).mockClear();
     
+    jest.spyOn(require('../services/redisMemoryService'), 'createRedisMemory')
+      .mockReturnValue(null);
+    
     await addRedisMessagePair(sessionId, userMessage, aiMessage);
     
     expect(memoryService.addMessagePair).toHaveBeenCalledWith(sessionId, userMessage, aiMessage);
@@ -122,6 +125,9 @@ describe('Redis Memory Service', () => {
     
     (memoryService.getHistory as jest.Mock).mockClear();
     
+    jest.spyOn(require('../services/redisMemoryService'), 'createRedisMemory')
+      .mockReturnValue(null);
+    
     const result = await getRedisHistory(sessionId);
     
     expect(memoryService.getHistory).toHaveBeenCalledWith(sessionId);
@@ -148,6 +154,9 @@ describe('Redis Memory Service', () => {
     (getRedisClient as jest.Mock).mockReturnValue(null);
     
     (memoryService.clearHistory as jest.Mock).mockClear();
+    
+    jest.spyOn(require('../services/redisMemoryService'), 'createRedisMemory')
+      .mockReturnValue(null);
     
     await clearRedisHistory(sessionId);
     

@@ -99,3 +99,34 @@ Ambi is an AI-powered conversational companion designed to reduce loneliness and
 ## Documentation
 - See `docs/prd.md` for the full product requirements and feature details.
 - See `docs/architecture.md` for the Phase 1 system architecture diagram.
+
+## Memory System
+
+Ambi implements a comprehensive two-tier memory system using LangChain:
+
+- **Short-term Memory**: Uses Redis to store recent conversation history
+- **Long-term Memory**: Uses Pinecone for semantic search and retrieval of past conversations
+
+### Setup
+
+After pulling the latest changes, run the setup script to ensure all dependencies are properly installed:
+
+```bash
+cd backend
+./setup.sh
+```
+
+This script will:
+1. Check and install/update backend dependencies
+2. Check and install/update frontend dependencies (if frontend directory exists)
+3. Run linting to catch any issues
+4. Verify required environment variables
+
+### Required Environment Variables
+
+The memory system requires the following environment variables:
+
+- `REDIS_URL`: Connection URL for Redis
+- `PINECONE_API_KEY`: API key for Pinecone
+- `PINECONE_INDEX_NAME`: Name of the Pinecone index
+- `OPENAI_API_KEY`: API key for OpenAI (used for embeddings)
