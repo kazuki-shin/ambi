@@ -1,14 +1,16 @@
-import React, { useState, useCallback } from 'react';
-import { View, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { View, StyleSheet, KeyboardAvoidingView, Platform, PermissionsAndroid } from 'react-native';
 import {
   Text,
   useTheme,
   ActivityIndicator,
   TextInput,
   Button,
+  IconButton,
 } from 'react-native-paper';
 import { MD3Theme } from 'react-native-paper';
-import { sendConversationMessage } from '../services/apiClient';
+import { sendConversationMessage, sendVoiceMessage } from '../services/apiClient';
+import AudioRecorderPlayer from 'react-native-audio-recorder-player';
 
 // Define possible states
 type SystemStatus = 'IDLE' | 'LISTENING' | 'THINKING' | 'SPEAKING' | 'ERROR';
@@ -22,8 +24,133 @@ const HomeScreen = () => {
   const [inputText, setInputText] = useState('');
   const [lastReply, setLastReply] = useState('');
   const [sessionId, setSessionId] = useState<string | undefined>(undefined);
+  
+  const [isRecording, setIsRecording] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [recordedAudioPath, setRecordedAudioPath] = useState<string | null>(null);
+  const audioRecorderPlayer = useRef(new AudioRecorderPlayer()).current;
 
-  // Handler for sending message
+  const requestMicrophonePermission = useCallback(async () => {
+    if (Platform.OS === 'android') {
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
+          {
+            title: 'Microphone Permission',
+            message: 'Ambi needs access to your microphone to enable voice conversations.',
+            buttonNeutral: 'Ask Me Later',
+            buttonNegative: 'Cancel',
+            buttonPositive: 'OK',
+          },
+        );
+        return granted === PermissionsAndroid.RESULTS.GRANTED;
+      } catch (err) {
+        console.error('Failed to request microphone permission:', err);
+        return false;
+      }
+    }
+    return true; // iOS handles permissions differently
+  }, []);
+
+  useEffect(() => {
+    const setupAudio = async () => {
+      await requestMicrophonePermission();
+    };
+    setupAudio();
+    
+    return () => {
+      if (isRecording) {
+        audioRecorderPlayer.stopRecorder();
+      }
+      if (isPlaying) {
+        audioRecorderPlayer.stopPlayer();
+      }
+    };
+  }, [requestMicrophonePermission, isRecording, isPlaying, audioRecorderPlayer]);
+
+  const startRecording = useCallback(async () => {
+    try {
+      const hasPermission = await requestMicrophonePermission();
+      if (!hasPermission) {
+        console.error('Microphone permission denied');
+        return;
+      }
+
+      setCurrentStatus('LISTENING');
+      setIsRecording(true);
+      
+      const audioPath = Platform.OS === 'ios' 
+        ? 'ambi_recording.m4a'
+        : `${Platform.OS === 'android' ? 'sdcard/' : ''}ambi_recording.mp4`;
+      
+      await audioRecorderPlayer.startRecorder(audioPath);
+      console.log('Recording started');
+    } catch (error) {
+      console.error('Failed to start recording:', error);
+      setCurrentStatus('ERROR');
+    }
+  }, [audioRecorderPlayer, requestMicrophonePermission]);
+
+  const stopRecordingAndSend = useCallback(async () => {
+    if (!isRecording) return;
+    
+    try {
+      const result = await audioRecorderPlayer.stopRecorder();
+      setIsRecording(false);
+      setRecordedAudioPath(result);
+      console.log('Recording stopped:', result);
+      
+      await processVoiceMessage(result);
+    } catch (error) {
+      console.error('Failed to stop recording:', error);
+      setCurrentStatus('ERROR');
+    }
+  }, [isRecording, audioRecorderPlayer]);
+
+  const processVoiceMessage = useCallback(async (recordedPath: string) => {
+    if (!recordedPath) return;
+    
+    setLastReply('');
+    setCurrentStatus('THINKING');
+    
+    try {
+      const response = await fetch(`file://${recordedPath}`);
+      const audioBlob = await response.blob();
+      
+      const voiceResponse = await sendVoiceMessage(audioBlob, undefined, sessionId);
+      
+      if (voiceResponse.sessionId) {
+        setSessionId(voiceResponse.sessionId);
+      }
+      
+      setLastReply(voiceResponse.textReply);
+      
+      setCurrentStatus('SPEAKING');
+      
+      const base64Audio = voiceResponse.audioReply;
+      const responseAudioPath = Platform.OS === 'ios'
+        ? `${Date.now()}.m4a`
+        : `${Platform.OS === 'android' ? 'sdcard/' : ''}ambi_response_${Date.now()}.mp3`;
+      
+      await audioRecorderPlayer.startPlayer(responseAudioPath);
+      
+      audioRecorderPlayer.addPlayBackListener((e) => {
+        if (e.currentPosition === e.duration) {
+          audioRecorderPlayer.removePlayBackListener();
+          setCurrentStatus('IDLE');
+          setIsPlaying(false);
+        }
+      });
+      
+      setIsPlaying(true);
+    } catch (error) {
+      console.error('Error processing voice message:', error);
+      setLastReply('Error: Could not process voice message.');
+      setCurrentStatus('ERROR');
+    }
+  }, [audioRecorderPlayer, sessionId]);
+
+  // Handler for sending text message
   const handleSendMessage = useCallback(async () => {
     if (!inputText.trim()) return;
 
@@ -100,17 +227,35 @@ const HomeScreen = () => {
             onChangeText={setInputText}
             placeholder="Type your message..."
             mode="outlined"
-            disabled={currentStatus === 'THINKING'}
+            disabled={currentStatus === 'THINKING' || currentStatus === 'LISTENING' || currentStatus === 'SPEAKING'}
           />
           <Button 
             mode="contained" 
             onPress={handleSendMessage}
-            disabled={!inputText.trim() || currentStatus === 'THINKING'}
+            disabled={!inputText.trim() || currentStatus === 'THINKING' || currentStatus === 'LISTENING' || currentStatus === 'SPEAKING'}
             style={styles.sendButton}
             loading={currentStatus === 'THINKING'}
             > 
             Send
           </Button>
+        </View>
+        
+        {/* Voice Controls */}
+        <View style={styles.voiceControlsContainer}>
+          <IconButton
+            icon={isRecording ? "microphone-off" : "microphone"}
+            mode="contained"
+            size={30}
+            onPress={isRecording ? stopRecordingAndSend : startRecording}
+            disabled={currentStatus === 'THINKING' || currentStatus === 'SPEAKING'}
+            style={[
+              styles.voiceButton,
+              isRecording && styles.recordingButton
+            ]}
+          />
+          <Text style={styles.voiceButtonLabel}>
+            {isRecording ? 'Stop & Send' : 'Voice Message'}
+          </Text>
         </View>
       </View>
     </KeyboardAvoidingView>
@@ -199,6 +344,24 @@ const createStyles = (theme: MD3Theme) => StyleSheet.create({
   },
   sendButton: {
   },
+  voiceControlsContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 10,
+    marginBottom: 20,
+    width: '90%',
+  },
+  voiceButton: {
+    backgroundColor: theme.colors.primaryContainer,
+    marginBottom: 5,
+  },
+  recordingButton: {
+    backgroundColor: theme.colors.errorContainer,
+  },
+  voiceButtonLabel: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+  },
 });
 
-export default HomeScreen; 
+export default HomeScreen;                  
