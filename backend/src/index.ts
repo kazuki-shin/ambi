@@ -6,8 +6,7 @@ import { initializePinecone } from './clients/pineconeClient';
 import { initializeRedis } from './clients/redisClient';
 import { getClaudeResponse } from './clients/claudeClient';
 import { addMessagePair, getHistory } from './services/memoryService';
-import { transcribeSpeech } from './clients/deepgramClient';
-import { synthesizeSpeech } from './clients/elevenLabsClient';
+import { voiceService } from './services/voiceService';
 
 dotenv.config();
 
@@ -83,7 +82,7 @@ app.post('/api/voice-conversation', (req: Request, res: Response) => {
     
     (async () => {
       try {
-        const transcribedText = await transcribeSpeech(audio);
+        const transcribedText = await voiceService.speechToText.transcribe(audio);
         
         if (!transcribedText) {
           console.error('[Voice Conversation] Failed to transcribe audio');
@@ -96,7 +95,7 @@ app.post('/api/voice-conversation', (req: Request, res: Response) => {
         const ambiReply = await getClaudeResponse(transcribedText);
         addMessagePair(currentSessionId, transcribedText, ambiReply);
         
-        const audioReply = await synthesizeSpeech(ambiReply);
+        const audioReply = await voiceService.textToSpeech.synthesize(ambiReply);
         
         if (!audioReply) {
           console.error('[Voice Conversation] Failed to synthesize speech');
@@ -139,4 +138,4 @@ if (require.main === module) {
   });
 }
 
-export default app; // Export the app instance for testing                                                      
+export default app; // Export the app instance for testing                                                                                                                                                                                                                        
