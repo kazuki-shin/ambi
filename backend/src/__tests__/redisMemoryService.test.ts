@@ -42,10 +42,10 @@ describe('Redis Memory Service', () => {
   const aiMessage = 'I am doing well, thank you for asking!';
   
   const mockRedisClient = {
-    hset: jest.fn().mockResolvedValue('OK'),
-    hgetall: jest.fn().mockResolvedValue({}),
-    del: jest.fn().mockResolvedValue('OK'),
-    expire: jest.fn().mockResolvedValue('OK')
+    hset: jest.fn().mockImplementation(() => Promise.resolve('OK')),
+    hgetall: jest.fn().mockImplementation(() => Promise.resolve({})),
+    del: jest.fn().mockImplementation(() => Promise.resolve('OK')),
+    expire: jest.fn().mockImplementation(() => Promise.resolve('OK'))
   };
   
   beforeEach(() => {
@@ -68,10 +68,10 @@ describe('Redis Memory Service', () => {
   
   test('addRedisMessagePair should store messages in Redis', async () => {
     const mockMemory = {
-      addUserMessage: jest.fn().mockResolvedValue(undefined),
-      addAIMessage: jest.fn().mockResolvedValue(undefined),
-      getMessages: jest.fn().mockResolvedValue([]),
-      clear: jest.fn().mockResolvedValue(undefined)
+      addUserMessage: jest.fn().mockImplementation(() => Promise.resolve()),
+      addAIMessage: jest.fn().mockImplementation(() => Promise.resolve()),
+      getMessages: jest.fn().mockImplementation(() => Promise.resolve([])),
+      clear: jest.fn().mockImplementation(() => Promise.resolve())
     };
     
     jest.spyOn(require('../services/redisMemoryService'), 'createRedisMemory')
@@ -100,10 +100,10 @@ describe('Redis Memory Service', () => {
     ];
     
     const mockMemory = {
-      addUserMessage: jest.fn().mockResolvedValue(undefined),
-      addAIMessage: jest.fn().mockResolvedValue(undefined),
-      getMessages: jest.fn().mockResolvedValue(mockMessages),
-      clear: jest.fn().mockResolvedValue(undefined)
+      addUserMessage: jest.fn().mockImplementation(() => Promise.resolve()),
+      addAIMessage: jest.fn().mockImplementation(() => Promise.resolve()),
+      getMessages: jest.fn().mockImplementation(() => Promise.resolve(mockMessages)),
+      clear: jest.fn().mockImplementation(() => Promise.resolve())
     };
     
     jest.spyOn(require('../services/redisMemoryService'), 'createRedisMemory')
@@ -130,10 +130,10 @@ describe('Redis Memory Service', () => {
   
   test('clearRedisHistory should clear conversation history from Redis', async () => {
     const mockMemory = {
-      addUserMessage: jest.fn().mockResolvedValue(undefined),
-      addAIMessage: jest.fn().mockResolvedValue(undefined),
-      getMessages: jest.fn().mockResolvedValue([]),
-      clear: jest.fn().mockResolvedValue(undefined)
+      addUserMessage: jest.fn().mockImplementation(() => Promise.resolve()),
+      addAIMessage: jest.fn().mockImplementation(() => Promise.resolve()),
+      getMessages: jest.fn().mockImplementation(() => Promise.resolve([])),
+      clear: jest.fn().mockImplementation(() => Promise.resolve())
     };
     
     jest.spyOn(require('../services/redisMemoryService'), 'createRedisMemory')
