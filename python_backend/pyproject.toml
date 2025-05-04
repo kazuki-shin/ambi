@@ -1,0 +1,53 @@
+[tool.poetry]
+name = "ambi-python"
+version = "0.1.0"
+description = "Python backend for Ambi - AI conversational companion"
+authors = ["Ambi Team"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = "^0.110.0"
+uvicorn = "^0.27.0"
+pydantic = "^2.6.0"
+python-dotenv = "^1.0.0"
+motor = "^3.3.2"
+redis = "^5.0.1"
+pinecone-client = "^3.0.0"
+anthropic = "^0.18.0"
+langchain = "^0.1.0"
+langchain-community = "^0.0.20"
+elevenlabs = "^0.2.27"
+deepgram-sdk = "^2.12.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.0"
+black = "^23.7.0"
+isort = "^5.12.0"
+mypy = "^1.5.1"
+pytest-cov = "^4.1.0"
+pytest-asyncio = "^0.21.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 88
+target-version = ["py312"]
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_functions = "test_*"
