@@ -68,7 +68,7 @@ poetry run mypy ambi
 ## Project Structure
 
 ```
-python_backend/
+backend/
 ├── ambi/
 │   ├── __init__.py
 │   ├── api/           # FastAPI routes and middleware

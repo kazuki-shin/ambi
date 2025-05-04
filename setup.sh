@@ -7,20 +7,20 @@ set -e
 
 echo "🚀 Setting up Ambi project..."
 
-# Check for Node.js
+# Check for Node.js (needed for frontend)
 if ! command -v node &> /dev/null; then
   echo "❌ Node.js is not installed. Please install Node.js (https://nodejs.org/) before proceeding."
   exit 1
 fi
 
-# Check for Python for Python backend
-if [ -d "python_backend" ] && ! command -v python3 &> /dev/null; then
-  echo "❌ Python 3 is not installed. Please install Python 3.12+ for the Python backend."
+# Check for Python
+if ! command -v python3 &> /dev/null; then
+  echo "❌ Python 3 is not installed. Please install Python 3.12+ for the backend."
   exit 1
 fi
 
-# Check for Poetry for Python backend
-if [ -d "python_backend" ] && ! command -v poetry &> /dev/null; then
+# Check for Poetry
+if ! command -v poetry &> /dev/null; then
   echo "⚠️ Poetry is not installed. Installing Poetry for Python dependency management..."
   curl -sSL https://install.python-poetry.org | python3 -
   if [ $? -ne 0 ]; then
@@ -53,42 +53,34 @@ if [ -d "frontend" ]; then
   fi
 fi
 
-if [ -d "python_backend" ]; then
-  if [ ! -f python_backend/.env ] && [ -f python_backend/.env.example ]; then
-    cp python_backend/.env.example python_backend/.env
-    echo "📝 python_backend/.env file created from .env.example. Please fill in the required values."
-  elif [ -f python_backend/.env ]; then
-    echo "✅ python_backend/.env file already exists."
-  else
-    echo "⚠️ python_backend/.env.example not found. Please create it and re-run this script."
-  fi
-fi
-
 if [ -d "backend" ]; then
-  echo -e "\n📦 Setting up TypeScript backend..."
+  echo -e "\n🐍 Setting up Python backend..."
   cd backend
   
-  # Update backend dependencies
-  echo "📦 Installing TypeScript backend dependencies..."
-  npm ci
-  echo "✅ TypeScript backend dependencies installed"
-  
-  # Run backend linting
-  echo "🔍 Running TypeScript backend linting..."
-  npm run lint
+  # Update Python backend dependencies
+  echo "📦 Installing Python backend dependencies..."
+  poetry install
   if [ $? -ne 0 ]; then
-    echo "⚠️ TypeScript backend linting found issues"
+    echo "❌ Failed to install Python backend dependencies"
   else
-    echo "✅ TypeScript backend linting passed"
+    echo "✅ Python backend dependencies installed"
   fi
   
-  # Run backend tests
-  echo "🧪 Running TypeScript backend tests..."
-  npm test
+  echo "🔍 Running Python linting..."
+  poetry run black . --check
+  poetry run isort . --check
   if [ $? -ne 0 ]; then
-    echo "⚠️ TypeScript backend tests failed"
+    echo "⚠️ Python linting found issues"
   else
-    echo "✅ TypeScript backend tests passed"
+    echo "✅ Python linting passed"
+  fi
+  
+  echo "🧪 Running Python tests..."
+  poetry run pytest
+  if [ $? -ne 0 ]; then
+    echo "⚠️ Python tests failed"
+  else
+    echo "✅ Python tests passed"
   fi
   
   cd ..
@@ -124,44 +116,10 @@ if [ -d "frontend" ]; then
   cd ..
 fi
 
-if [ -d "python_backend" ]; then
-  echo -e "\n🐍 Setting up Python backend..."
-  cd python_backend
-  
-  # Update Python backend dependencies
-  echo "📦 Installing Python backend dependencies..."
-  poetry install
-  if [ $? -ne 0 ]; then
-    echo "❌ Failed to install Python backend dependencies"
-  else
-    echo "✅ Python backend dependencies installed"
-  fi
-  
-  echo "🔍 Running Python linting..."
-  poetry run black . --check
-  poetry run isort . --check
-  if [ $? -ne 0 ]; then
-    echo "⚠️ Python linting found issues"
-  else
-    echo "✅ Python linting passed"
-  fi
-  
-  echo "🧪 Running Python tests..."
-  poetry run pytest
-  if [ $? -ne 0 ]; then
-    echo "⚠️ Python tests failed"
-  else
-    echo "✅ Python tests passed"
-  fi
-  
-  cd ..
-fi
-
 echo -e "\n🎉 Setup complete!"
 echo "Next steps:"
 echo "1. Fill in your .env files with the required API keys and configuration values."
-echo "2. TypeScript backend server: cd backend && npm run dev"
-echo "3. Python backend server: cd python_backend && poetry run uvicorn ambi.api.main:app --reload"
-echo "4. Web demo: cd frontend && npm run web"
-echo "5. iOS app: cd frontend && npm run ios"
-echo "6. For additional information, see the documentation in docs/prd.md."
+echo "2. Python backend server: cd backend && poetry run uvicorn ambi.api.main:app --reload"
+echo "3. Web demo: cd frontend && npm run web"
+echo "4. iOS app: cd frontend && npm run ios"
+echo "5. For additional information, see the documentation in docs/prd.md."
