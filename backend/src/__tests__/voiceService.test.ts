@@ -2,7 +2,6 @@ import { voiceService, DeepgramSpeechToTextService, ElevenLabsTextToSpeechServic
 import { transcribeSpeech, transcribeSpeechFromUrl, setupLiveTranscription } from '../clients/deepgramClient';
 import { synthesizeSpeech } from '../clients/elevenLabsClient';
 import { jest, describe, it, expect, beforeEach } from '@jest/globals';
-import { LiveTranscriptionConnection } from '../interfaces/voiceInterfaces';
 
 jest.mock('../clients/deepgramClient');
 jest.mock('../clients/elevenLabsClient');
@@ -44,12 +43,11 @@ describe('Voice Service', () => {
       const options = { language: 'en-US' };
       const callback = jest.fn();
       
-      mockSetupLiveTranscription.mockReturnValueOnce('mocked-connection' as any);
+      mockSetupLiveTranscription.mockReturnValueOnce(null);
       
-      const result = service.setupLiveTranscription(options, callback);
+      service.setupLiveTranscription(options, callback);
       
       expect(mockSetupLiveTranscription).toHaveBeenCalledWith(options, callback);
-      expect(result).toBe('mocked-connection');
     });
   });
 

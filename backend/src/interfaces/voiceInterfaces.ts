@@ -1,14 +1,11 @@
 import { Buffer } from 'buffer';
+import { ListenLiveClient } from '@deepgram/sdk';
 
 /**
  * Interface for a live transcription connection
+ * This is a simplified version of the Deepgram ListenLiveClient
  */
-export type LiveTranscriptionConnection = {
-  on(event: string, callback: (...args: unknown[]) => void): void;
-  send?(data: Buffer): void;
-  close?(): void;
-  [key: string]: any; // Allow any other properties
-}
+export type LiveTranscriptionConnection = ListenLiveClient;
 
 /**
  * Interface for speech-to-text operations

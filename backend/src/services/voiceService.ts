@@ -33,7 +33,8 @@ export class DeepgramSpeechToTextService implements SpeechToTextService {
     },
     onTranscript: (transcript: string) => void
   ): LiveTranscriptionConnection | null {
-    return setupLiveTranscription(options, onTranscript);
+    const connection = setupLiveTranscription(options, onTranscript);
+    return connection as unknown as LiveTranscriptionConnection;
   }
 }
 
