@@ -3,7 +3,8 @@ import { addToMemory, getRecentHistory, getRelevantMemories, buildMemoryContext 
 import * as redisMemoryService from '../services/redisMemoryService';
 import * as pineconeMemoryService from '../services/pineconeMemoryService';
 import { PineconeVectorMemory } from '../services/pineconeMemoryService';
-import { BaseMessage } from '@langchain/core/messages';
+import { BaseMessage, HumanMessage, AIMessage } from '@langchain/core/messages';
+import { MemoryVariables } from '@langchain/core/memory';
 
 jest.mock('../services/redisMemoryService', () => ({
   createRedisMemory: jest.fn(),
@@ -24,6 +25,16 @@ describe('Memory Manager', () => {
   const sessionId = 'test-session-123';
   const userMessage = 'Hello, how are you?';
   const aiMessage = 'I am doing well, thank you for asking!';
+
+  const mockRecentHistory: BaseMessage[] = [
+    new HumanMessage('Recent message'),
+    new AIMessage('Recent response')
+  ];
+
+  const mockRelevantMemories: BaseMessage[] = [
+    new HumanMessage('Relevant message'),
+    new AIMessage('Relevant response')
+  ];
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -48,27 +59,19 @@ describe('Memory Manager', () => {
     );
   });
 
-  test('getRecentHistory should retrieve history from Redis', async () => {
-    const mockHistory = [
-      { content: userMessage, type: 'human' },
-      { content: aiMessage, type: 'ai' },
-    ];
-    
-    const _getRedisHistoryMock = jest.spyOn(redisMemoryService, 'getRedisHistory')
-      .mockImplementation(() => Promise.resolve(mockHistory as unknown as BaseMessage[]));
+  test('getRecentHistory should retrieve history from Redis as BaseMessages', async () => {
+    const getRedisHistoryMock = jest.spyOn(redisMemoryService, 'getRedisHistory')
+      .mockResolvedValue(mockRecentHistory);
     
     const result = await getRecentHistory(sessionId);
     
-    expect(result).toEqual(mockHistory);
-    expect(_getRedisHistoryMock).toHaveBeenCalledWith(sessionId);
+    expect(result).toEqual(mockRecentHistory);
+    expect(result[0]).toBeInstanceOf(HumanMessage);
+    expect(result[1]).toBeInstanceOf(AIMessage);
+    expect(getRedisHistoryMock).toHaveBeenCalledWith(sessionId);
   });
 
-  test('getRelevantMemories should retrieve memories from Pinecone', async () => {
-    const mockRelevantMemories = [
-      { content: 'Previous relevant message', type: 'human' },
-      { content: 'Previous relevant response', type: 'ai' },
-    ];
-    
+  test('getRelevantMemories should retrieve memories from Pinecone as BaseMessages', async () => {
     const mockPineconeMemory = {
       loadMemoryVariables: jest.fn().mockImplementation(() => Promise.resolve({
         relevantHistory: mockRelevantMemories,
@@ -81,23 +84,15 @@ describe('Memory Manager', () => {
     const result = await getRelevantMemories(sessionId, userMessage);
     
     expect(result).toEqual(mockRelevantMemories);
+    expect(result[0]).toBeInstanceOf(HumanMessage);
+    expect(result[1]).toBeInstanceOf(AIMessage);
     expect(mockPineconeMemory.loadMemoryVariables)
       .toHaveBeenCalledWith({ input: userMessage });
   });
 
   test('buildMemoryContext should combine recent and relevant memories', async () => {
-    const mockRecentHistory = [
-      { content: 'Recent message', type: 'human' },
-      { content: 'Recent response', type: 'ai' },
-    ];
-    
-    const mockRelevantMemories = [
-      { content: 'Relevant message', type: 'human' },
-      { content: 'Relevant response', type: 'ai' },
-    ];
-    
-    const _getRedisHistoryMock = jest.spyOn(redisMemoryService, 'getRedisHistory')
-      .mockImplementation(() => Promise.resolve(mockRecentHistory as unknown as BaseMessage[]));
+    jest.spyOn(redisMemoryService, 'getRedisHistory')
+      .mockResolvedValue(mockRecentHistory);
     
     const mockPineconeMemory = {
       loadMemoryVariables: jest.fn().mockImplementation(() => Promise.resolve({
@@ -110,7 +105,12 @@ describe('Memory Manager', () => {
     
     const result = await buildMemoryContext(sessionId, userMessage);
     
-    expect(result).toEqual([...mockRelevantMemories, ...mockRecentHistory]);
+    const expectedCombined = [...mockRelevantMemories, ...mockRecentHistory];
+    expect(result).toEqual(expectedCombined);
+    expect(result[0]).toBeInstanceOf(HumanMessage);
+    expect(result[1]).toBeInstanceOf(AIMessage);
+    expect(result[2]).toBeInstanceOf(HumanMessage);
+    expect(result[3]).toBeInstanceOf(AIMessage);
   });
 
   test('buildMemoryContext should handle empty session ID', async () => {
@@ -118,24 +118,22 @@ describe('Memory Manager', () => {
     expect(result).toEqual([]);
   });
 
-  test('buildMemoryContext should handle errors gracefully', async () => {
-    const mockPineconeMemory = {
-      loadMemoryVariables: jest.fn().mockImplementation(() => Promise.reject(new Error('Test error'))),
+  test('buildMemoryContext should handle errors gracefully and return recent history', async () => {
+    jest.spyOn(redisMemoryService, 'getRedisHistory')
+      .mockResolvedValue(mockRecentHistory);
+    
+    const mockLoadMemoryVariables = jest.fn().mockImplementationOnce(() => {
+      return Promise.reject(new Error('Pinecone error'));
+    });
+    const mockPineconeMemoryInstance = {
+      saveContext: jest.fn(),
+      loadMemoryVariables: mockLoadMemoryVariables 
     };
-    
-    jest.spyOn(pineconeMemoryService, 'createPineconeMemory')
-      .mockReturnValue(mockPineconeMemory as unknown as PineconeVectorMemory);
-    
-    const mockRecentHistory = [
-      { content: 'Recent message', type: 'human' },
-      { content: 'Recent response', type: 'ai' },
-    ];
-    
-    const _getRedisHistoryMock = jest.spyOn(redisMemoryService, 'getRedisHistory')
-      .mockImplementation(() => Promise.resolve(mockRecentHistory as unknown as BaseMessage[]));
+    jest.spyOn(pineconeMemoryService, 'createPineconeMemory').mockReturnValue(mockPineconeMemoryInstance as any);
     
     const result = await buildMemoryContext(sessionId, userMessage);
     
     expect(result).toEqual(mockRecentHistory);
+    expect(mockLoadMemoryVariables).toHaveBeenCalledWith({ input: userMessage });
   });
 });
