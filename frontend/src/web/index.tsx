@@ -8,7 +8,13 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import VoiceDemo from './VoiceDemo'; // Restore this import
 
-const container = document.getElementById('root');
+// Ensure the root div exists
+let container = document.getElementById('root');
+if (!container) {
+  container = document.createElement('div');
+  container.id = 'root';
+  document.body.appendChild(container);
+}
 
 if (container) {
   const root = createRoot(container);
