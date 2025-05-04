@@ -70,6 +70,12 @@ app.post('/api/conversation', async (req: Request, res: Response) => {
 */
 
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-}); 
+
+// Only start listening if the file is run directly (not imported as a module)
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
+export default app; // Export the app instance for testing 

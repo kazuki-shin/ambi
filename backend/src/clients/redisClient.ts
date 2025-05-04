@@ -5,6 +5,9 @@ dotenv.config();
 
 let redisClient: Redis | null = null;
 
+// Export client for testing purposes
+export { redisClient };
+
 /**
  * Initializes the Redis client.
  * NOTE: In Phase 1, this is just a stub and doesn't actually connect unless REDIS_URL is set.
