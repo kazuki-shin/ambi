@@ -60,7 +60,6 @@ export class PineconeVectorMemory extends BaseMemory {
    */
   async loadMemoryVariables(values: InputValues): Promise<MemoryVariables> {
     const query = values[this.inputKey] as string;
-    const currentSessionId = values.sessionId as string | undefined; // Get current sessionId if passed
 
     if (!query) {
       return { relevantHistory: [] };
