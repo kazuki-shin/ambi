@@ -50,9 +50,12 @@ describe('Embedding Service', () => {
   });
 
   test('initializeEmbeddings should return mock embeddings when API key is missing', () => {
-    process.env.OPENAI_API_KEY = '';
+    delete process.env.OPENAI_API_KEY;
     
-    const embeddings = embeddingService.initializeEmbeddings();
+    jest.resetModules();
+    
+    const freshEmbeddingService = require('../services/embeddingService');
+    const embeddings = freshEmbeddingService.initializeEmbeddings();
     
     expect(embeddings).toBeDefined();
     expect(console.warn).toHaveBeenCalledWith(
@@ -90,15 +93,23 @@ describe('Embedding Service', () => {
   });
 
   test('generateEmbedding should handle errors gracefully', async () => {
+    jest.resetModules();
+    
+    const freshEmbeddingService = require('../services/embeddingService');
+    
     const mockEmbeddings = {
-      embedQuery: jest.fn().mockImplementation(() => Promise.reject(new Error('API Error'))),
-      embedDocuments: jest.fn().mockImplementation(() => Promise.reject(new Error('API Error')))
+      embedQuery: jest.fn().mockImplementation((): Promise<number[]> => {
+        return Promise.reject(new Error('API Error'));
+      }),
+      embedDocuments: jest.fn().mockImplementation((): Promise<number[][]> => {
+        return Promise.reject(new Error('API Error'));
+      })
     };
     
-    jest.spyOn(embeddingService, 'initializeEmbeddings').mockReturnValue(mockEmbeddings as unknown as OpenAIEmbeddings);
+    jest.spyOn(freshEmbeddingService, 'initializeEmbeddings').mockReturnValue(mockEmbeddings as unknown as OpenAIEmbeddings);
     
     const text = 'Test query that will cause an error';
-    const result = await embeddingService.generateEmbedding(text);
+    const result = await freshEmbeddingService.generateEmbedding(text);
     
     expect(console.error).toHaveBeenCalledWith(
       expect.stringContaining('Error generating embedding:'),
