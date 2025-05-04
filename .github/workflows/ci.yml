@@ -39,7 +39,8 @@ jobs:
       run: npm test # Now uses config from package.json (coverage + thresholds)
       env:
         # Add any required test environment variables here, even if empty
-        MONGODB_URI: mongodb+srv://shinkazuki99:NyTBJQfsLRGmfMEH@ambi.d7o8akh.mongodb.net/
+        # Use a syntactically valid placeholder URI for CI tests
+        MONGODB_URI: mongodb://localhost:27017/test_db # Revert to placeholder
         REDIS_URL: redis://localhost:6379
         ANTHROPIC_API_KEY: dummy_key
         ELEVENLABS_API_KEY: dummy_key
