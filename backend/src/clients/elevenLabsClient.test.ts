@@ -1,5 +1,6 @@
 import { synthesizeSpeech, _setElevenLabsClientForTest } from './elevenLabsClient';
 import dotenv from 'dotenv';
+import { ElevenLabsClient } from 'elevenlabs';
 
 // Prevent dotenv from loading .env file automatically during tests
 jest.mock('dotenv', () => ({ config: jest.fn() }));
@@ -22,7 +23,7 @@ const originalModule = jest.requireActual('./elevenLabsClient');
 // Reset mocks and set the test client before each test
 beforeEach(() => {
   mockConvert.mockClear();
-  _setElevenLabsClientForTest(mockClientInstance as any); // Inject the mock client
+  _setElevenLabsClientForTest(mockClientInstance as unknown as ElevenLabsClient); // Inject the mock client
   // Reset env vars potentially changed by tests
   delete process.env.ELEVENLABS_MODEL_ID;
   delete process.env.ELEVENLABS_DEFAULT_VOICE_ID;
@@ -71,7 +72,7 @@ describe('ElevenLabs Client - synthesizeSpeech', () => {
     process.env.ELEVENLABS_MODEL_ID = envModelId; // Set env var
     jest.resetModules(); // Reset modules to read the updated env var state
     const { synthesizeSpeech: synthesizeSpeechFresh, _setElevenLabsClientForTest: setClientFresh } = await import('./elevenLabsClient');
-    setClientFresh(mockClientInstance as any);
+    setClientFresh(mockClientInstance as unknown as ElevenLabsClient);
     setupMockSuccess();
     const mockText = 'Env Model ID test';
 
@@ -155,7 +156,7 @@ describe('ElevenLabs Client - synthesizeSpeech', () => {
     process.env.ELEVENLABS_DEFAULT_VOICE_ID = envVoiceId;
     jest.resetModules();
     const { synthesizeSpeech: synthesizeSpeechFresh, _setElevenLabsClientForTest: setClientFresh } = await import('./elevenLabsClient');
-    setClientFresh(mockClientInstance as any);
+    setClientFresh(mockClientInstance as unknown as ElevenLabsClient);
     setupMockSuccess();
     const mockText = 'Hello world - env default';
 
@@ -198,7 +199,7 @@ describe('ElevenLabs Client - synthesizeSpeech', () => {
     expect(mockConvert).not.toHaveBeenCalled();
     expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining('ElevenLabs client not initialized'));
     consoleWarnSpy.mockRestore();
-    _setElevenLabsClientForTest(mockClientInstance as any); // Restore
+    _setElevenLabsClientForTest(mockClientInstance as unknown as ElevenLabsClient); // Restore
   });
 
   it('should return null and log error if convert fails', async () => {
