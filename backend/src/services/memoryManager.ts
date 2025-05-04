@@ -78,8 +78,19 @@ export const getRelevantMemories = async (
   
   try {
     const longTermMemory = createPineconeMemory(sessionId);
-    const result = await longTermMemory.loadMemoryVariables({ input: query });
-    return result.relevantHistory || [];
+    if (!longTermMemory) {
+      console.warn('[MemoryManager Debug] Failed to create Pinecone memory instance.');
+      return [];
+    }
+    
+    const relevantHistoryResult = await longTermMemory.loadMemoryVariables({ input: query });
+
+    console.log(`[MemoryManager Debug] Pinecone retrieval results for query "${query.substring(0, 50)}...":`, JSON.stringify(relevantHistoryResult, null, 2));
+    const retrievedDocs = relevantHistoryResult.relevantHistory || [];
+    const relevantMessages: BaseMessage[] = Array.isArray(retrievedDocs) ? retrievedDocs.filter(doc => doc instanceof BaseMessage) : [];
+    console.log(`[MemoryManager Debug] Found ${relevantMessages.length} potentially relevant BaseMessage documents via Pinecone.`);
+    
+    return relevantMessages;
   } catch (error) {
     console.error(`[MemoryManager] Error retrieving relevant memories:`, error);
     return [];
@@ -102,13 +113,43 @@ export const buildMemoryContext = async (
   
   try {
     const recentHistory = await getRecentHistory(sessionId);
+    console.log(`[MemoryManager] Retrieved ${recentHistory.length} recent messages.`);
     
     const relevantMemories = await getRelevantMemories(sessionId, currentQuery);
     
-    const combinedContext = [...relevantMemories, ...recentHistory];
+    const combinedMessages: BaseMessage[] = [];
+    const processedMemoryIds = new Set<string>();
+
+    relevantMemories.forEach(mem => {
+      const memoryId = JSON.stringify(mem);
+      if (!processedMemoryIds.has(memoryId)) {
+        combinedMessages.push(mem);
+        processedMemoryIds.add(memoryId);
+      }
+    });
+
+    recentHistory.forEach(msg => {
+      const messageId = JSON.stringify(msg);
+      if (!processedMemoryIds.has(messageId)) {
+        combinedMessages.push(msg);
+        processedMemoryIds.add(messageId);
+      }
+    });
+
+    const maxContextMessages = 10;
+    const finalMessages = combinedMessages.slice(-maxContextMessages);
+
+    console.log(`[MemoryManager] Built context with ${recentHistory.length} recent messages and ${relevantMemories.length} relevant memories.`);
     
-    console.log(`[MemoryManager] Built context with ${recentHistory.length} recent messages and ${relevantMemories.length} relevant memories`);
-    return combinedContext;
+    console.log(`[MemoryManager Debug] Final context messages being sent to LLM (Count: ${finalMessages.length}):`);
+    const relevantMemorySet = new Set(relevantMemories.map(mem => JSON.stringify(mem)));
+    finalMessages.forEach((msg, index) => {
+      const msgId = JSON.stringify(msg);
+      const origin = relevantMemorySet.has(msgId) ? 'Pinecone (LTM)' : 'Redis (STM)';
+      console.log(`  [${index}] Origin: ${origin}, Type: ${msg._getType()}, Content: "${String(msg.content).substring(0, 70)}..."`);
+    });
+
+    return finalMessages;
   } catch (error) {
     console.error(`[MemoryManager] Error building memory context:`, error);
     return getRecentHistory(sessionId);
