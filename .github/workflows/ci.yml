@@ -1,0 +1,70 @@
+name: Ambi CI
+
+on:
+  push:
+    branches: [ main ] # Or your primary branch name
+  pull_request:
+    branches: [ main ] # Or your primary branch name
+
+jobs:
+  backend-checks:
+    name: Backend Checks
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x] # Test on multiple LTS Node versions
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: backend/package-lock.json # Cache deps based on backend lock file
+
+    - name: Install Backend Dependencies
+      working-directory: ./backend
+      run: npm ci # Use ci for cleaner installs in CI
+
+    # Note: Linting depends on eslint config. Our eslint.config.mjs is in backend.
+    # Need to add a lint script to backend/package.json if not present.
+    # For now, assuming a lint script exists or skipping.
+    # - name: Lint Backend
+    #   working-directory: ./backend
+    #   run: npm run lint
+
+    - name: Test Backend
+      working-directory: ./backend
+      run: npm test
+      env:
+        # Add any required test environment variables here, even if empty
+        MONGODB_URI: test_db_uri # Use dummy or test-specific URIs
+        REDIS_URL: redis://localhost:6379
+        ANTHROPIC_API_KEY: dummy_key
+        ELEVENLABS_API_KEY: dummy_key
+        DEEPGRAM_API_KEY: dummy_key
+        # CI: true # Often useful for test runners
+
+    - name: Build Backend
+      working-directory: ./backend
+      run: npm run build
+
+  # Optional: Add a separate job for frontend checks later
+  # frontend-checks:
+  #   name: Frontend Checks
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-node@v4
+  #       with:
+  #         node-version: '20.x' # Or specific version for frontend
+  #         cache: 'npm'
+  #         cache-dependency-path: frontend/package-lock.json
+  #     - name: Install Frontend Dependencies
+  #       working-directory: ./frontend
+  #       run: npm ci
+  #     # Add lint/build steps for frontend if desired 
