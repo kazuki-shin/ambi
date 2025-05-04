@@ -54,8 +54,7 @@ describe('Embedding Service', () => {
     
     jest.resetModules();
     
-    const freshEmbeddingService = require('../services/embeddingService');
-    const embeddings = freshEmbeddingService.initializeEmbeddings();
+    const embeddings = embeddingService.initializeEmbeddings();
     
     expect(embeddings).toBeDefined();
     expect(console.warn).toHaveBeenCalledWith(
@@ -93,10 +92,6 @@ describe('Embedding Service', () => {
   });
 
   test('generateEmbedding should handle errors gracefully', async () => {
-    jest.resetModules();
-    
-    const freshEmbeddingService = require('../services/embeddingService');
-    
     const mockEmbeddings = {
       embedQuery: jest.fn().mockImplementation((): Promise<number[]> => {
         return Promise.reject(new Error('API Error'));
@@ -106,10 +101,10 @@ describe('Embedding Service', () => {
       })
     };
     
-    jest.spyOn(freshEmbeddingService, 'initializeEmbeddings').mockReturnValue(mockEmbeddings as unknown as OpenAIEmbeddings);
+    jest.spyOn(embeddingService, 'initializeEmbeddings').mockReturnValue(mockEmbeddings as unknown as OpenAIEmbeddings);
     
     const text = 'Test query that will cause an error';
-    const result = await freshEmbeddingService.generateEmbedding(text);
+    const result = await embeddingService.generateEmbedding(text);
     
     expect(console.error).toHaveBeenCalledWith(
       expect.stringContaining('Error generating embedding:'),
