@@ -227,12 +227,43 @@
             credentials: 'omit'
           });
           
+          // Check response content type
+          const contentType = response.headers.get('content-type');
+          
           if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Server error');
+            let errorMessage = 'Server error';
+            try {
+              // Only try to parse as JSON if content type is application/json
+              if (contentType && contentType.includes('application/json')) {
+                const errorData = await response.json();
+                errorMessage = errorData.error || 'Server error';
+              } else {
+                // Otherwise get the raw text
+                const errorText = await response.text();
+                console.error('Error response:', errorText);
+                errorMessage = `Server error: ${errorText.substring(0, 100)}${errorText.length > 100 ? '...' : ''}`;
+              }
+            } catch (parseError) {
+              console.error('Error parsing error response:', parseError);
+              errorMessage = `Error parsing response: ${parseError.message}`;
+            }
+            throw new Error(errorMessage);
           }
           
-          const data = await response.json();
+          let data;
+          try {
+            // Only try to parse as JSON if content type is application/json
+            if (contentType && contentType.includes('application/json')) {
+              data = await response.json();
+            } else {
+              const responseText = await response.text();
+              console.error('Unexpected response format:', responseText);
+              throw new Error(`Unexpected response format: ${responseText.substring(0, 100)}${responseText.length > 100 ? '...' : ''}`);
+            }
+          } catch (parseError) {
+            console.error('Error parsing response:', parseError);
+            throw new Error(`Error parsing response: ${parseError.message}`);
+          }
           
           if (data.sessionId) {
             sessionId = data.sessionId;
