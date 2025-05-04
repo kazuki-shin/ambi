@@ -1,0 +1,27 @@
+{
+  "name": "ambi",
+  "version": "1.0.0",
+  "description": "## Overview Ambi is an AI-powered conversational companion designed to reduce loneliness and enhance the quality of life for elderly individuals. It provides proactive, emotionally intelligent conversation, memory support, and family context integration through a tablet-based application.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "prepare": "husky",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kazuki-shin/ambi.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kazuki-shin/ambi/issues"
+  },
+  "homepage": "https://github.com/kazuki-shin/ambi#readme",
+  "devDependencies": {
+    "husky": "^9.1.7"
+  }
+}
