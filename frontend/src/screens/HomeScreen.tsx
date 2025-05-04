@@ -1,28 +1,65 @@
-import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Text, useTheme, ActivityIndicator } from 'react-native-paper';
+import React, { useState, useCallback } from 'react';
+import { View, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import {
+  Text,
+  useTheme,
+  ActivityIndicator,
+  TextInput,
+  Button,
+} from 'react-native-paper';
 import { MD3Theme } from 'react-native-paper';
+import { sendConversationMessage } from '../services/apiClient';
 
 // Define possible states
-type SystemStatus = 'IDLE' | 'LISTENING' | 'THINKING' | 'SPEAKING';
+type SystemStatus = 'IDLE' | 'LISTENING' | 'THINKING' | 'SPEAKING' | 'ERROR';
 
 const HomeScreen = () => {
   const theme = useTheme<MD3Theme>();
   const styles = createStyles(theme);
-  // State for the current system status - defaulting to IDLE
+  
+  // State variables
   const [currentStatus, setCurrentStatus] = useState<SystemStatus>('IDLE');
+  const [inputText, setInputText] = useState('');
+  const [lastReply, setLastReply] = useState('');
+  const [sessionId, setSessionId] = useState<string | undefined>(undefined);
+
+  // Handler for sending message
+  const handleSendMessage = useCallback(async () => {
+    if (!inputText.trim()) return;
+
+    const messageToSend = inputText;
+    setInputText('');
+    setLastReply('');
+    setCurrentStatus('THINKING');
+
+    try {
+      const response = await sendConversationMessage({
+        message: messageToSend,
+        sessionId: sessionId,
+      });
+      setLastReply(response.reply);
+      if (response.sessionId) {
+        setSessionId(response.sessionId);
+      }
+      setCurrentStatus('IDLE'); 
+    } catch (error) {
+      console.error('Error sending message:', error);
+      setLastReply('Error: Could not get response from backend.');
+      setCurrentStatus('ERROR');
+    }
+  }, [inputText, sessionId]);
 
   // Helper function to render status indicator
   const renderStatusIndicator = () => {
     switch (currentStatus) {
       case 'LISTENING':
-        // TODO: Replace with a better visual indicator, e.g., mic icon
         return <Text style={styles.statusText}>Listening...</Text>;
       case 'THINKING':
         return <ActivityIndicator animating={true} color={theme.colors.primary} size="small" style={styles.statusIndicator} />;
       case 'SPEAKING':
-        // TODO: Replace with a better visual indicator, e.g., speaker icon or animation
         return <Text style={styles.statusText}>Speaking...</Text>;
+      case 'ERROR':
+         return <Text style={[styles.statusText, { color: theme.colors.error }]}>Error</Text>;
       case 'IDLE':
       default:
         return <Text style={styles.statusText}>Idle</Text>;
@@ -30,46 +67,78 @@ const HomeScreen = () => {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Placeholder for Three.js Visual Companion */}
-      <View style={styles.visualCompanionPlaceholder}>
-        <Text style={styles.placeholderText}>[Visual Companion Area]</Text>
-      </View>
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={styles.keyboardAvoidingContainer}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
+      >
+      <View style={styles.container}>
+        {/* Placeholder for Three.js Visual Companion */}
+        <View style={styles.visualCompanionPlaceholder}>
+          <Text style={styles.placeholderText}>[Visual Companion Area]</Text>
+        </View>
 
-      <Text style={styles.title}>Ambi Home Screen</Text>
-      {/* Placeholder for conversation UI */}
-      
-      {/* System Status Display */}
-      <View style={styles.statusContainer}>
-        <Text style={styles.statusLabel}>Status: </Text>
-        {renderStatusIndicator()}
-      </View>
+        <Text style={styles.title}>Ambi Home Screen</Text>
 
-      {/* TODO: Add buttons for temporary state change testing if needed */}
-    </View>
+        {/* Display Last Reply */}
+        <View style={styles.replyContainer}>
+          <Text style={styles.replyLabel}>Ambi:</Text>
+          <Text style={styles.replyText}>{lastReply || '...'}</Text>
+        </View>
+        
+        {/* System Status Display */}
+        <View style={styles.statusContainer}>
+          <Text style={styles.statusLabel}>Status: </Text>
+          {renderStatusIndicator()}
+        </View>
+
+        {/* Input Area */}
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            value={inputText}
+            onChangeText={setInputText}
+            placeholder="Type your message..."
+            mode="outlined"
+            disabled={currentStatus === 'THINKING'}
+          />
+          <Button 
+            mode="contained" 
+            onPress={handleSendMessage}
+            disabled={!inputText.trim() || currentStatus === 'THINKING'}
+            style={styles.sendButton}
+            loading={currentStatus === 'THINKING'}
+            > 
+            Send
+          </Button>
+        </View>
+      </View>
+    </KeyboardAvoidingView>
   );
 };
 
 const createStyles = (theme: MD3Theme) => StyleSheet.create({
+  keyboardAvoidingContainer: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    // justifyContent: 'center', // Adjust alignment if needed
     alignItems: 'center',
     padding: 20,
     backgroundColor: theme.colors.background,
   },
-  visualCompanionPlaceholder: { // Style for the placeholder
-    width: '80%',
+  visualCompanionPlaceholder: {
+    width: '90%',
     height: 150,
-    backgroundColor: theme.colors.surfaceVariant, // Use a theme color
+    backgroundColor: theme.colors.surfaceVariant,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 8,
-    marginBottom: 30,
+    marginBottom: 20,
     borderWidth: 1,
     borderColor: theme.colors.outline,
   },
-  placeholderText: { // Style for text inside placeholder
+  placeholderText: {
     color: theme.colors.onSurfaceVariant,
     fontSize: 14,
   },
@@ -77,26 +146,59 @@ const createStyles = (theme: MD3Theme) => StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: theme.colors.primary,
-    marginBottom: 40, // Increased margin
+    marginBottom: 20,
   },
-  statusContainer: { // Style for status row
+  replyContainer: {
+    minHeight: 60,
+    width: '90%',
+    padding: 10,
+    backgroundColor: theme.colors.surface,
+    borderRadius: 8,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: theme.colors.outlineVariant,
+  },
+  replyLabel: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: theme.colors.onSurfaceVariant,
+    marginBottom: 4,
+  },
+  replyText: {
+    fontSize: 16,
+    color: theme.colors.onSurface,
+  },
+  statusContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 30,
+    marginBottom: 20,
   },
   statusLabel: {
     fontSize: 16,
     color: theme.colors.secondary,
     marginRight: 5,
   },
-  statusText: { // Style for text status
+  statusText: {
     fontSize: 16,
     color: theme.colors.secondary,
     fontStyle: 'italic',
   },
-  statusIndicator: { // Style for ActivityIndicator
-    marginLeft: 5, 
-  }
+  statusIndicator: {
+    marginLeft: 5,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '90%',
+    marginTop: 'auto',
+    paddingBottom: 10,
+  },
+  input: {
+    flex: 1,
+    marginRight: 10,
+  },
+  sendButton: {
+  },
 });
 
 export default HomeScreen; 
