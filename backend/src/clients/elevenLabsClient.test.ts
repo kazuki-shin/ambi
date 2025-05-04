@@ -1,6 +1,9 @@
 import { synthesizeSpeech, _setElevenLabsClientForTest } from './elevenLabsClient';
 import dotenv from 'dotenv';
 
+// Prevent dotenv from loading .env file automatically during tests
+jest.mock('dotenv', () => ({ config: jest.fn() }));
+
 // Load environment variables (optional, as we are injecting mocks)
 dotenv.config();
 
@@ -77,7 +80,7 @@ describe('ElevenLabs Client - synthesizeSpeech', () => {
 
     // Assert
     expect(mockConvert).toHaveBeenCalledTimes(1);
-    expect(mockConvert).toHaveBeenCalledWith(FALLBACK_DEFAULT_VOICE_ID, {
+    expect(mockConvert).toHaveBeenCalledWith('pNInz6obpgDQGcFmaJgB', {
       text: mockText,
       model_id: envModelId, // Check env var model was used
       voice_settings: {
@@ -99,7 +102,7 @@ describe('ElevenLabs Client - synthesizeSpeech', () => {
 
     // Assert
     expect(mockConvert).toHaveBeenCalledTimes(1);
-    expect(mockConvert).toHaveBeenCalledWith(FALLBACK_DEFAULT_VOICE_ID, {
+    expect(mockConvert).toHaveBeenCalledWith('pNInz6obpgDQGcFmaJgB', {
       text: mockText,
       model_id: SDK_DEFAULT_MODEL_ID,
       voice_settings: { // Check custom settings were used
@@ -134,16 +137,16 @@ describe('ElevenLabs Client - synthesizeSpeech', () => {
 
   it('should use fallback default voice ID when no voiceId and no env var is provided', async () => {
     // Arrange
-    // Env var is deleted in beforeEach, no need to reset modules just for this
+    delete process.env.ELEVENLABS_DEFAULT_VOICE_ID; // Use delete instead
     setupMockSuccess();
     const mockText = 'Hello world - fallback default';
 
     // Act
-    await synthesizeSpeech(mockText); // Call without voiceId
+    await synthesizeSpeech(mockText);
 
     // Assert
     expect(mockConvert).toHaveBeenCalledTimes(1);
-    expect(mockConvert).toHaveBeenCalledWith(FALLBACK_DEFAULT_VOICE_ID, expect.any(Object));
+    expect(mockConvert).toHaveBeenCalledWith('pNInz6obpgDQGcFmaJgB', expect.any(Object));
   });
 
   it('should use environment variable default voice ID when no voiceId is provided', async () => {
