@@ -30,16 +30,13 @@ jobs:
       working-directory: ./backend
       run: npm ci # Use ci for cleaner installs in CI
 
-    # Note: Linting depends on eslint config. Our eslint.config.mjs is in backend.
-    # Need to add a lint script to backend/package.json if not present.
-    # For now, assuming a lint script exists or skipping.
-    # - name: Lint Backend
-    #   working-directory: ./backend
-    #   run: npm run lint
-
-    - name: Test Backend
+    - name: Lint Backend
       working-directory: ./backend
-      run: npm test -- --passWithNoTests
+      run: npm run lint
+
+    - name: Test Backend & Check Coverage
+      working-directory: ./backend
+      run: npm test # Now uses config from package.json (coverage + thresholds)
       env:
         # Add any required test environment variables here, even if empty
         MONGODB_URI: test_db_uri # Use dummy or test-specific URIs
@@ -52,6 +49,14 @@ jobs:
     - name: Build Backend
       working-directory: ./backend
       run: npm run build
+
+    - name: Upload Coverage Report
+      if: always() # Run even if previous steps fail, to upload partial reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: backend-coverage-report-${{ matrix.node-version }}
+        path: backend/coverage/lcov-report # Path to the HTML report
+        retention-days: 7 # Keep reports for 7 days
 
   # Optional: Add a separate job for frontend checks later
   # frontend-checks:
