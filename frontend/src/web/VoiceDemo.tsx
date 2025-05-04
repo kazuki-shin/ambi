@@ -12,6 +12,10 @@ declare global {
   interface Window {
     MediaRecorder: any;
   }
+  
+  interface MediaStreamTrack {
+    stop(): void;
+  }
 }
 
 const VoiceDemo: React.FC = () => {
