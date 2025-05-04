@@ -26,7 +26,13 @@ const mockAddToMemory = addToMemory as jest.MockedFunction<typeof addToMemory>;
 const mockGetRecentHistory = getRecentHistory as jest.MockedFunction<typeof getRecentHistory>;
 
 describe('POST /api/voice-conversation', () => {
+  const originalEnv = process.env; // Store original environment
+
   beforeEach(() => {
+    // Reset Environment Variables
+    process.env = { ...originalEnv }; 
+    process.env.INTERACTION_MODE = 'voice'; // Ensure voice mode for this suite
+    
     mockSpeechToText.mockClear();
     mockTextToSpeech.mockClear();
     mockGetClaudeResponse.mockClear();
@@ -37,6 +43,11 @@ describe('POST /api/voice-conversation', () => {
     mockSpeechToText.mockResolvedValue('Transcribed text');
     mockGetClaudeResponse.mockResolvedValue('Mocked Claude response.');
     mockTextToSpeech.mockResolvedValue(Buffer.from('Mocked audio data'));
+  });
+
+  afterEach(() => {
+    // Restore original environment variables after each test
+    process.env = originalEnv;
   });
 
   it('should process voice input and return audio and text responses', async () => {
@@ -153,6 +164,8 @@ describe('POST /api/voice-conversation', () => {
   });
 
   afterAll(async () => {
+    // Restore original environment variables after the suite is done
+    process.env = originalEnv; 
     try {
       await mongoose.disconnect();
       
