@@ -1,4 +1,4 @@
-import { BaseMessage, AIMessage } from '@langchain/core/messages';
+import { BaseMessage } from '@langchain/core/messages';
 import { BaseMemory, InputValues, OutputValues, MemoryVariables } from '@langchain/core/memory';
 import { RedisChatMessageHistory } from '@langchain/community/stores/message/ioredis';
 import { getRedisClient } from '../clients/redisClient';
@@ -62,8 +62,8 @@ export class RedisBufferWindowMemory extends BaseMemory {
     const result: { [key: string]: string } = {};
     
     if (windowedMessages.length > 0) {
-      let humanMessages = [];
-      let aiMessages = [];
+      const humanMessages = [];
+      const aiMessages = [];
       
       for (let i = 0; i < windowedMessages.length; i += 2) {
         if (i < windowedMessages.length) {
