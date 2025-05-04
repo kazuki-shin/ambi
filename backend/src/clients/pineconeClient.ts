@@ -48,7 +48,7 @@ const createMockPineconeClient = () => {
   const mockVectors: Record<string, PineconeRecord> = {};
   
   const mockClient = {
-    index: (name: string) => ({
+    index: (_name: string) => ({
       namespace: (namespace: string) => ({
         upsert: async (records: PineconeRecord[]) => {
           for (const record of records) {
@@ -57,7 +57,7 @@ const createMockPineconeClient = () => {
           }
           return { upsertedCount: records.length };
         },
-        query: async ({ vector, topK, filter }: { vector: number[], topK: number, filter?: Record<string, any> }) => {
+        query: async ({ vector, topK, filter }: { vector: number[], topK: number, filter?: Record<string, unknown> }) => {
           const results = Object.entries(mockVectors)
             .filter(([key]) => key.startsWith(`${namespace}:`))
             .filter(([_, record]) => {
@@ -114,7 +114,7 @@ export const upsertVectors = async (
   try {
     console.log(`Upserting ${records.length} vectors to Pinecone namespace ${namespace}...`);
     const index = client.index(indexName);
-    const response = await index.namespace(namespace).upsert(records);
+    await index.namespace(namespace).upsert(records);
     console.log(`Upserted vectors to Pinecone namespace ${namespace}.`);
     return { upsertedCount: records.length };
   } catch (error) {
@@ -135,7 +135,7 @@ export const queryVectors = async (
   vector: number[],
   topK: number = longTermMemoryConfig.maxResults,
   namespace: string = longTermMemoryConfig.pineconeNamespace,
-  filter?: Record<string, any>
+  filter?: Record<string, unknown>
 ) => {
   const client = pinecone || await initializePinecone();
   
