@@ -10,10 +10,6 @@ import { voiceService } from './services/voiceService';
 
 dotenv.config();
 
-// Determine Interaction Mode
-const INTERACTION_MODE = process.env.INTERACTION_MODE === 'text' ? 'text' : 'voice'; // Default to 'voice'
-console.log(`[Config] Interaction mode set to: ${INTERACTION_MODE}`);
-
 // Connect to Database
 connectDB();
 
@@ -60,9 +56,12 @@ app.get('/health', (_req: Request, res: Response) => {
 });
 
 app.post('/api/conversation', async (req: Request, res: Response) => {
+  // Read interaction mode inside the handler
+  const interactionMode = process.env.INTERACTION_MODE === 'text' ? 'text' : 'voice'; 
+
   const { message, userId, sessionId } = req.body as ConversationRequest;
   const currentSessionId = sessionId || `session_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-  console.log(`Received message: "${message}" from user: ${userId || 'unknown'} in session: ${currentSessionId}`);
+  console.log(`Received message: "${message}" from user: ${userId || 'unknown'} in session: ${currentSessionId} (Mode: ${interactionMode})`);
   
   await getRecentHistory(currentSessionId);
   
@@ -72,7 +71,7 @@ app.post('/api/conversation', async (req: Request, res: Response) => {
 
   // Conditionally prepare voice response if mode is 'voice'
   let audioReplyBase64: string | null = null;
-  if (INTERACTION_MODE === 'voice') {
+  if (interactionMode === 'voice') { // Use local interactionMode variable
     console.log('[Conversation] Synthesizing voice reply...');
     const audioBuffer = await voiceService.textToSpeech.synthesize(ambiReply);
     if (audioBuffer) {
@@ -94,11 +93,14 @@ app.post('/api/conversation', async (req: Request, res: Response) => {
 });
 
 app.post('/api/voice-conversation', async (req: Request, res: Response): Promise<void> => {
+  // Read interaction mode inside the handler
+  const interactionMode = process.env.INTERACTION_MODE === 'text' ? 'text' : 'voice'; 
+
   try {
     // Only process if mode is 'voice'
-    if (INTERACTION_MODE !== 'voice') {
-      console.warn(`[Voice Conversation] Received request while mode is '${INTERACTION_MODE}'. Ignoring.`);
-      res.status(400).json({ error: `Voice input not processed in '${INTERACTION_MODE}' mode.` });
+    if (interactionMode !== 'voice') { // Use local interactionMode variable
+      console.warn(`[Voice Conversation] Received request while mode is '${interactionMode}'. Ignoring.`);
+      res.status(400).json({ error: `Voice input not processed in '${interactionMode}' mode.` });
       return;
     }
 
