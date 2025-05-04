@@ -10,6 +10,10 @@ import { voiceService } from './services/voiceService';
 
 dotenv.config();
 
+// Determine Interaction Mode
+const INTERACTION_MODE = process.env.INTERACTION_MODE === 'text' ? 'text' : 'voice'; // Default to 'voice'
+console.log(`[Config] Interaction mode set to: ${INTERACTION_MODE}`);
+
 // Connect to Database
 connectDB();
 
@@ -66,66 +70,95 @@ app.post('/api/conversation', async (req: Request, res: Response) => {
   
   await addToMemory(currentSessionId, message, ambiReply);
 
-  const response: ConversationResponse = {
+  // Conditionally prepare voice response if mode is 'voice'
+  let audioReplyBase64: string | null = null;
+  if (INTERACTION_MODE === 'voice') {
+    console.log('[Conversation] Synthesizing voice reply...');
+    const audioBuffer = await voiceService.textToSpeech.synthesize(ambiReply);
+    if (audioBuffer) {
+      audioReplyBase64 = audioBuffer.toString('base64');
+      console.log(`[Conversation] Voice reply synthesized (${audioBuffer.length} bytes)`);
+    } else {
+      console.error('[Conversation] Failed to synthesize voice reply.');
+      // Decide if we should fail the request or just send text
+    }
+  }
+
+  // Send back both text and potentially audio
+  const response: ConversationResponse & { audioReply?: string | null } = {
     reply: ambiReply,
-    sessionId: currentSessionId
+    sessionId: currentSessionId,
+    audioReply: audioReplyBase64 // Will be null if mode is 'text' or synthesis failed
   };
   res.json(response);
 });
 
-app.post('/api/voice-conversation', (req: Request, res: Response) => {
+app.post('/api/voice-conversation', async (req: Request, res: Response): Promise<void> => {
   try {
+    // Only process if mode is 'voice'
+    if (INTERACTION_MODE !== 'voice') {
+      console.warn(`[Voice Conversation] Received request while mode is '${INTERACTION_MODE}'. Ignoring.`);
+      res.status(400).json({ error: `Voice input not processed in '${INTERACTION_MODE}' mode.` });
+      return;
+    }
+
+    // If mode is 'voice', proceed with the async processing directly
     const audio = req.body;
     const userId = req.query.userId as string | undefined;
     const sessionId = req.query.sessionId as string | undefined;
-    
+
     const currentSessionId = sessionId || `session_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-    
+
     console.log(`Received voice message from user: ${userId || 'unknown'} in session: ${currentSessionId}`);
-    
-    (async () => {
-      try {
-        const transcribedText = await voiceService.speechToText.transcribe(audio);
-        
-        if (!transcribedText) {
-          console.error('[Voice Conversation] Failed to transcribe audio');
-          return res.status(400).json({ error: 'Failed to transcribe audio' });
-        }
-        
-        console.log(`[Voice Conversation] Transcribed text: "${transcribedText}"`);
-        
-        await getRecentHistory(currentSessionId);
-        
-        const ambiReply = await getClaudeResponse(transcribedText, currentSessionId);
-        
-        await addToMemory(currentSessionId, transcribedText, ambiReply);
-        
-        const audioReply = await voiceService.textToSpeech.synthesize(ambiReply);
-        
-        if (!audioReply) {
-          console.error('[Voice Conversation] Failed to synthesize speech');
-          return res.status(500).json({ error: 'Failed to synthesize speech' });
-        }
-        
-        console.log(`[Voice Conversation] Successfully synthesized audio reply (${audioReply.length} bytes)`);
-        
-        res.setHeader('Content-Type', 'application/json');
-        
-        const response = {
-          audioReply: audioReply.toString('base64'),
-          textReply: ambiReply,
-          sessionId: currentSessionId
-        };
-        
-        res.json(response);
-      } catch (error) {
-        console.error('[Voice Conversation] Error processing voice conversation:', error);
-        res.status(500).json({ error: 'Internal server error processing voice conversation' });
+
+    // Removed the IIFE, await operations directly in the handler
+    try {
+      const transcribedText = await voiceService.speechToText.transcribe(audio);
+
+      if (!transcribedText) {
+        console.error('[Voice Conversation] Failed to transcribe audio');
+        res.status(400).json({ error: 'Failed to transcribe audio' });
+        return;
       }
-    })();
+
+      console.log(`[Voice Conversation] Transcribed text: "${transcribedText}"`);
+
+      await getRecentHistory(currentSessionId);
+
+      const ambiReply = await getClaudeResponse(transcribedText, currentSessionId);
+
+      await addToMemory(currentSessionId, transcribedText, ambiReply);
+
+      const audioReply = await voiceService.textToSpeech.synthesize(ambiReply);
+
+      if (!audioReply) {
+        console.error('[Voice Conversation] Failed to synthesize speech');
+        res.status(500).json({ error: 'Failed to synthesize speech' });
+        return;
+      }
+
+      console.log(`[Voice Conversation] Successfully synthesized audio reply (${audioReply.length} bytes)`);
+
+      res.setHeader('Content-Type', 'application/json');
+
+      const response = {
+        audioReply: audioReply.toString('base64'),
+        textReply: ambiReply,
+        sessionId: currentSessionId
+      };
+
+      res.json(response);
+      return;
+    } catch (error) {
+      console.error('[Voice Conversation] Error processing voice conversation:', error);
+      res.status(500).json({ error: 'Internal server error processing voice conversation' });
+      return;
+    }
+
   } catch (error) {
     console.error('[Voice Conversation] Error handling voice conversation request:', error);
     res.status(500).json({ error: 'Internal server error handling voice conversation request' });
+    return;
   }
 });
 // --- End Original Routes ---
