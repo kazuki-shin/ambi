@@ -13,12 +13,25 @@ export default defineConfig([
         ...globals.es2021 
       } 
     },
-    ignores: [ // Add ignores
-      "node_modules/", 
-      "dist/", 
+    rules: {
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          "argsIgnorePattern": "^_",
+          "varsIgnorePattern": "^_",
+          "caughtErrorsIgnorePattern": "^_"
+        }
+      ]
+    }
+  },
+  tseslint.configs.recommended,
+  // Global ignores applied to all checks
+  {
+    ignores: [
+      "node_modules/",
+      "dist/",
       "coverage/"
     ]
   },
-  tseslint.configs.recommended,
   // pluginReact.configs.flat.recommended, // Remove React config
 ]);

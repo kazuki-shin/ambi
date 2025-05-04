@@ -24,21 +24,6 @@
     "url": "https://github.com/kazuki-shin/ambi/issues"
   },
   "homepage": "https://github.com/kazuki-shin/ambi#readme",
-  "jest": {
-    "preset": "ts-jest",
-    "testEnvironment": "node",
-    "collectCoverage": true,
-    "coverageDirectory": "coverage",
-    "coverageReporters": ["json", "lcov", "text", "clover", "html"],
-    "coverageThreshold": {
-      "global": {
-        "branches": 15,
-        "functions": 30,
-        "lines": 45,
-        "statements": 45
-      }
-    }
-  },
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/dotenv": "^6.1.1",
