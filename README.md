@@ -97,4 +97,5 @@ Ambi is an AI-powered conversational companion designed to reduce loneliness and
     *   (Note: Currently passes with no tests found. Add actual tests later.)
 
 ## Documentation
-- See `docs/prd.md`
+- See `docs/prd.md` for the full product requirements and feature details.
+- See `docs/architecture.md` for the Phase 1 system architecture diagram.
