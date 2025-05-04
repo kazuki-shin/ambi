@@ -3,6 +3,7 @@ import { BaseMemory, InputValues, OutputValues, MemoryVariables } from '@langcha
 import { RedisChatMessageHistory } from '@langchain/community/stores/message/ioredis';
 import { getRedisClient } from '../clients/redisClient';
 import { shortTermMemoryConfig } from '../config/memoryConfig';
+import * as memoryService from './memoryService';
 
 /**
  * Redis-backed implementation of short-term memory using a custom BufferWindowMemory.
@@ -189,8 +190,7 @@ export const addRedisMessagePair = async (
   const memory = createRedisMemory(sessionId);
   
   if (!memory) {
-    const { addMessagePair } = require('./memoryService');
-    addMessagePair(sessionId, humanMessageContent, aiMessageContent);
+    memoryService.addMessagePair(sessionId, humanMessageContent, aiMessageContent);
     return;
   }
   
@@ -200,8 +200,7 @@ export const addRedisMessagePair = async (
     console.log(`[RedisMemoryService] Added messages for session ${sessionId}`);
   } catch (error) {
     console.error(`[RedisMemoryService] Error adding messages for session ${sessionId}:`, error);
-    const { addMessagePair } = require('./memoryService');
-    addMessagePair(sessionId, humanMessageContent, aiMessageContent);
+    memoryService.addMessagePair(sessionId, humanMessageContent, aiMessageContent);
   }
 };
 
@@ -219,8 +218,7 @@ export const getRedisHistory = async (sessionId: string): Promise<BaseMessage[]>
   const memory = createRedisMemory(sessionId);
   
   if (!memory) {
-    const { getHistory } = require('./memoryService');
-    return getHistory(sessionId);
+    return memoryService.getHistory(sessionId);
   }
   
   try {
@@ -229,8 +227,7 @@ export const getRedisHistory = async (sessionId: string): Promise<BaseMessage[]>
     return messages;
   } catch (error) {
     console.error(`[RedisMemoryService] Error retrieving history for session ${sessionId}:`, error);
-    const { getHistory } = require('./memoryService');
-    return getHistory(sessionId);
+    return memoryService.getHistory(sessionId);
   }
 };
 
@@ -247,8 +244,7 @@ export const clearRedisHistory = async (sessionId: string): Promise<void> => {
   const memory = createRedisMemory(sessionId);
   
   if (!memory) {
-    const { clearHistory } = require('./memoryService');
-    clearHistory(sessionId);
+    memoryService.clearHistory(sessionId);
     return;
   }
   
@@ -257,7 +253,6 @@ export const clearRedisHistory = async (sessionId: string): Promise<void> => {
     console.log(`[RedisMemoryService] Cleared history for session ${sessionId}.`);
   } catch (error) {
     console.error(`[RedisMemoryService] Error clearing history for session ${sessionId}:`, error);
-    const { clearHistory } = require('./memoryService');
-    clearHistory(sessionId);
+    memoryService.clearHistory(sessionId);
   }
 };
