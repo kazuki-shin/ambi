@@ -2,21 +2,24 @@ import { describe, expect, test, beforeEach, jest } from '@jest/globals';
 import { addToMemory, getRecentHistory, getRelevantMemories, buildMemoryContext } from '../services/memoryManager';
 import * as redisMemoryService from '../services/redisMemoryService';
 import * as pineconeMemoryService from '../services/pineconeMemoryService';
-import { PineconeVectorMemory } from '../services/pineconeMemoryService';
 import { BaseMessage, HumanMessage, AIMessage } from '@langchain/core/messages';
 
+// Mock redis service
 jest.mock('../services/redisMemoryService', () => ({
   addRedisMessagePair: jest.fn(),
   getRedisHistory: jest.fn(),
   clearRedisHistory: jest.fn(),
 }));
 
+// Mock the pinecone service module directly
 const mockSaveContext = jest.fn();
 const mockLoadMemoryVariables = jest.fn();
 jest.mock('../services/pineconeMemoryService', () => ({
   createPineconeMemory: jest.fn().mockImplementation(() => ({
-    saveContext: mockSaveContext,
-    loadMemoryVariables: mockLoadMemoryVariables,
+    // @ts-expect-error - Ignore potential type mismatch for mockResolvedValue
+    saveContext: mockSaveContext.mockResolvedValue(undefined),
+    // @ts-expect-error - Ignore potential type mismatch for mockResolvedValue
+    loadMemoryVariables: mockLoadMemoryVariables.mockResolvedValue({ relevantHistory: [] }),
   })),
 }));
 
@@ -36,15 +39,20 @@ describe('Memory Manager', () => {
   ];
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    mockSaveContext.mockClear();
+    mockLoadMemoryVariables.mockClear();
+    (redisMemoryService.addRedisMessagePair as jest.Mock).mockClear();
+    (redisMemoryService.getRedisHistory as jest.Mock).mockClear();
+    (pineconeMemoryService.createPineconeMemory as jest.Mock).mockClear();
   });
 
   test('addToMemory should call dependencies correctly', async () => {
     const addRedisMock = jest.spyOn(redisMemoryService, 'addRedisMessagePair').mockResolvedValue(undefined);
+    // @ts-expect-error - Ignore potential type mismatch for mockResolvedValue
     mockSaveContext.mockResolvedValue(undefined);
-    
+
     await addToMemory(sessionId, userMessage, aiMessage);
-    
+
     expect(addRedisMock).toHaveBeenCalledWith(sessionId, userMessage, aiMessage);
     expect(pineconeMemoryService.createPineconeMemory).toHaveBeenCalledWith(sessionId);
     expect(mockSaveContext).toHaveBeenCalledWith(
@@ -55,7 +63,7 @@ describe('Memory Manager', () => {
 
   test('getRecentHistory should call redis and return BaseMessages', async () => {
     const getRedisHistoryMock = jest.spyOn(redisMemoryService, 'getRedisHistory')
-      .mockResolvedValue(mockRecentHistory);
+      .mockResolvedValueOnce(mockRecentHistory);
 
     const result = await getRecentHistory(sessionId);
 
@@ -66,7 +74,8 @@ describe('Memory Manager', () => {
   });
 
   test('getRelevantMemories should call pinecone and return BaseMessages', async () => {
-    mockLoadMemoryVariables.mockResolvedValue({ relevantHistory: mockRelevantMemories });
+    // @ts-expect-error - Ignore potential type mismatch for mockResolvedValue
+    mockLoadMemoryVariables.mockResolvedValueOnce({ relevantHistory: mockRelevantMemories });
 
     const result = await getRelevantMemories(sessionId, userMessage);
 
@@ -78,8 +87,9 @@ describe('Memory Manager', () => {
   });
 
   test('buildMemoryContext should combine memories correctly', async () => {
-    jest.spyOn(redisMemoryService, 'getRedisHistory').mockResolvedValue(mockRecentHistory);
-    mockLoadMemoryVariables.mockResolvedValue({ relevantHistory: mockRelevantMemories });
+    jest.spyOn(redisMemoryService, 'getRedisHistory').mockResolvedValueOnce(mockRecentHistory);
+    // @ts-expect-error - Ignore potential type mismatch for mockResolvedValue
+    mockLoadMemoryVariables.mockResolvedValueOnce({ relevantHistory: mockRelevantMemories });
 
     const result = await buildMemoryContext(sessionId, userMessage);
 
@@ -91,8 +101,9 @@ describe('Memory Manager', () => {
   });
 
   test('buildMemoryContext should handle errors gracefully', async () => {
-    jest.spyOn(redisMemoryService, 'getRedisHistory').mockResolvedValue(mockRecentHistory);
-    mockLoadMemoryVariables.mockRejectedValue(new Error('Pinecone error'));
+    jest.spyOn(redisMemoryService, 'getRedisHistory').mockResolvedValueOnce(mockRecentHistory);
+    // @ts-expect-error - Ignore potential type mismatch for mockRejectedValue
+    mockLoadMemoryVariables.mockRejectedValueOnce(new Error('Pinecone error'));
 
     const result = await buildMemoryContext(sessionId, userMessage);
 
