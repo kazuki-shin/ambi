@@ -6,8 +6,8 @@ import { initializePinecone } from './clients/pineconeClient';
 import { initializeRedis } from './clients/redisClient';
 import { getClaudeResponse } from './clients/claudeClient';
 import { addMessagePair, getHistory } from './services/memoryService';
-// import { transcribeSpeech } from './clients/deepgramClient';
-// import { synthesizeSpeech } from './clients/elevenLabsClient';
+import { transcribeSpeech } from './clients/deepgramClient';
+import { synthesizeSpeech } from './clients/elevenLabsClient';
 
 dotenv.config();
 
@@ -24,14 +24,30 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.use('/api/voice-conversation', express.raw({ type: 'application/octet-stream', limit: '10mb' }));
+
 // --- Interfaces ---
 interface ConversationRequest {
   message: string;
   userId?: string;
   sessionId?: string;
 }
+
+interface _VoiceConversationRequest {
+  audio: Buffer;
+  userId?: string;
+  sessionId?: string;
+}
+
 interface ConversationResponse {
   reply: string;
+  sessionId?: string;
+}
+
+interface _VoiceConversationResponse {
+  audioReply: Buffer;
+  textReply: string;
+  sessionId?: string;
 }
 // --- End Interfaces ---
 
@@ -48,22 +64,65 @@ app.post('/api/conversation', async (req: Request, res: Response) => {
   const ambiReply = await getClaudeResponse(message);
   addMessagePair(currentSessionId, message, ambiReply);
 
-  // --- REMOVING TEMPORARY TEST for Deepgram --- 
-  // console.log('[Conversation Endpoint] Triggering STT stub...');
-  // await transcribeSpeech(null); // Pass null as dummy audio source for stub
-  // console.log('[Conversation Endpoint] STT stub trigger complete.');
-  // --- END REMOVING TEMPORARY TEST ---
-
-  // --- REMOVING TEMPORARY TEST for ElevenLabs --- 
-  // console.log('[Conversation Endpoint] Triggering TTS stub...');
-  // await synthesizeSpeech(ambiReply);
-  // console.log('[Conversation Endpoint] TTS stub trigger complete.');
-  // --- END REMOVING TEMPORARY TEST ---
-
   const response: ConversationResponse = {
     reply: ambiReply,
+    sessionId: currentSessionId
   };
   res.json(response);
+});
+
+app.post('/api/voice-conversation', (req: Request, res: Response) => {
+  try {
+    const audio = req.body;
+    const userId = req.query.userId as string | undefined;
+    const sessionId = req.query.sessionId as string | undefined;
+    
+    const currentSessionId = sessionId || `session_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    
+    console.log(`Received voice message from user: ${userId || 'unknown'} in session: ${currentSessionId}`);
+    
+    (async () => {
+      try {
+        const transcribedText = await transcribeSpeech(audio);
+        
+        if (!transcribedText) {
+          console.error('[Voice Conversation] Failed to transcribe audio');
+          return res.status(400).json({ error: 'Failed to transcribe audio' });
+        }
+        
+        console.log(`[Voice Conversation] Transcribed text: "${transcribedText}"`);
+        
+        const _history = getHistory(currentSessionId);
+        const ambiReply = await getClaudeResponse(transcribedText);
+        addMessagePair(currentSessionId, transcribedText, ambiReply);
+        
+        const audioReply = await synthesizeSpeech(ambiReply);
+        
+        if (!audioReply) {
+          console.error('[Voice Conversation] Failed to synthesize speech');
+          return res.status(500).json({ error: 'Failed to synthesize speech' });
+        }
+        
+        console.log(`[Voice Conversation] Successfully synthesized audio reply (${audioReply.length} bytes)`);
+        
+        res.setHeader('Content-Type', 'application/json');
+        
+        const response = {
+          audioReply: audioReply.toString('base64'),
+          textReply: ambiReply,
+          sessionId: currentSessionId
+        };
+        
+        res.json(response);
+      } catch (error) {
+        console.error('[Voice Conversation] Error processing voice conversation:', error);
+        res.status(500).json({ error: 'Internal server error processing voice conversation' });
+      }
+    })();
+  } catch (error) {
+    console.error('[Voice Conversation] Error handling voice conversation request:', error);
+    res.status(500).json({ error: 'Internal server error handling voice conversation request' });
+  }
 });
 // --- End Original Routes ---
 
@@ -80,4 +139,4 @@ if (require.main === module) {
   });
 }
 
-export default app; // Export the app instance for testing   
+export default app; // Export the app instance for testing                                                      

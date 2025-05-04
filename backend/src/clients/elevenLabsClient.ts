@@ -21,10 +21,9 @@ const DEFAULT_VOICE_ID: string | null = null; // 'pNInz6obpgDQGcFmaJgB';
 
 /**
  * Synthesizes speech from text using ElevenLabs API.
- * NOTE: In Phase 1, this is just a stub.
  * @param text - The text to synthesize.
  * @param voiceId - Optional voice ID to use.
- * @returns A Promise that resolves to an audio buffer or similar audio data (or null for stub).
+ * @returns A Promise that resolves to an audio buffer or null if synthesis fails.
  */
 export const synthesizeSpeech = async (
   text: string,
@@ -35,32 +34,27 @@ export const synthesizeSpeech = async (
     return null;
   }
 
-  if (!voiceId) {
-    console.warn('ElevenLabs voice ID not set. Cannot synthesize speech (stub).');
-    return null;
-  }
+  const effectiveVoiceId = voiceId || 'pNInz6obpgDQGcFmaJgB'; // Rachel voice as default
 
-  console.log(`[ElevenLabs Stub] Synthesizing speech for text: "${text.substring(0, 50)}..." using voice ${voiceId}`);
+  console.log(`[ElevenLabs] Synthesizing speech for text: "${text.substring(0, 50)}..." using voice ${effectiveVoiceId}`);
 
   try {
-    // --- TODO: Implement actual API call in later phase ---
-    // Example:
-    // const audio = await elevenlabs.generate({ voice: voiceId, text });
-    // // Process the audio stream (e.g., collect into a buffer)
-    // const chunks: Buffer[] = [];
-    // for await (const chunk of audio) {
-    //   chunks.push(chunk);
-    // }
-    // const audioBuffer = Buffer.concat(chunks);
-    // console.log(`[ElevenLabs] Synthesized audio buffer size: ${audioBuffer.length}`);
-    // return audioBuffer;
-    // --- End Example ---
+    const audio = await elevenlabs.generate({
+      voice: effectiveVoiceId,
+      text,
+      model_id: 'eleven_turbo_v2',
+    });
 
-    // For Phase 1 stub, return null or a dummy buffer if needed for testing downstream
-    console.log('[ElevenLabs Stub] Returning null (not implemented).');
-    return null;
+    const chunks: Buffer[] = [];
+    for await (const chunk of audio) {
+      chunks.push(chunk);
+    }
+    
+    const audioBuffer = Buffer.concat(chunks);
+    console.log(`[ElevenLabs] Synthesized audio buffer size: ${audioBuffer.length} bytes`);
+    return audioBuffer;
   } catch (error) {
     console.error('[ElevenLabs] Error synthesizing speech:', error);
     return null;
   }
-}; 
+};  

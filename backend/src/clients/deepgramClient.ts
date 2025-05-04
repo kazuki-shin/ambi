@@ -1,4 +1,4 @@
-import { createClient, DeepgramClient } from '@deepgram/sdk';
+import { createClient, DeepgramClient, LiveTranscriptionEvents } from '@deepgram/sdk';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -18,45 +18,35 @@ if (apiKey) {
 
 /**
  * Transcribes audio data using Deepgram.
- * NOTE: This is a basic stub for Phase 1. It doesn't handle actual audio input yet.
- * This example assumes pre-recorded audio; live transcription would be different.
- * @param audioSource - The audio data (e.g., a Buffer or URL). For stub, this is ignored.
+ * @param audioBuffer - The audio data as a Buffer.
  * @returns A Promise resolving to the transcription text or null if failed.
  */
 export const transcribeSpeech = async (
-  _audioSource: unknown // Prefix unused param, change type from any
+  audioBuffer: Buffer
 ): Promise<string | null> => {
   if (!deepgramClient) {
     console.warn('Deepgram client not initialized (API key missing?). Cannot transcribe.');
     return null;
   }
 
-  console.log('[Deepgram Stub] Received request to transcribe audio source.');
+  console.log('[Deepgram] Received request to transcribe audio source.');
 
   try {
-    // --- TODO: Implement actual API call in later phase ---
-    // Example for pre-recorded audio (e.g., from a Buffer):
-    // const { result, error } = await deepgramClient.listen.prerecorded.transcribeFile(
-    //   audioSource, // Assuming audioSource is a Buffer
-    //   {
-    //     model: 'nova-2',
-    //     smart_format: true,
-    //     // Add language, diarize, etc. as needed based on PRD
-    //     // language: 'en-US', // Example
-    //     // diarize: true, // Example for speaker separation
-    //   }
-    // );
-    // if (error) throw error;
-    // if (!result) throw new Error('No transcription result received.');
-    // const transcript = result.results.channels[0].alternatives[0].transcript;
-    // console.log(`[Deepgram] Transcription: ${transcript}`);
-    // return transcript;
-    // --- End Example ---
-
-    // For Phase 1 stub, return a placeholder string
-    const placeholderTranscript = 'This is a placeholder transcription from the Deepgram stub.';
-    console.log(`[Deepgram Stub] Returning placeholder: "${placeholderTranscript}"`);
-    return placeholderTranscript;
+    const { result, error } = await deepgramClient.listen.prerecorded.transcribeFile(
+      audioBuffer,
+      {
+        model: 'nova-2',
+        smart_format: true,
+        language: 'en-US',
+      }
+    );
+    
+    if (error) throw error;
+    if (!result) throw new Error('No transcription result received.');
+    
+    const transcript = result.results.channels[0].alternatives[0].transcript;
+    console.log(`[Deepgram] Transcription: ${transcript}`);
+    return transcript;
 
   } catch (error) {
     console.error('[Deepgram] Error transcribing speech:', error);
@@ -64,22 +54,94 @@ export const transcribeSpeech = async (
   }
 };
 
-// --- TODO: Implement Live Transcription Handling if needed based on PRD ---
-// This would involve setting up a WebSocket connection and handling events.
-// Example structure:
-// export const setupLiveTranscription = (/* connection parameters */) => {
-//   if (!deepgramClient) return null;
-//   const connection = deepgramClient.listen.live({
-//      model: 'nova-2',
-//      language: 'en-US',
-//      // other options
-//   });
-//   connection.on(LiveTranscriptionEvents.Open, () => console.log('[Deepgram Live] Connection opened.'));
-//   connection.on(LiveTranscriptionEvents.Transcript, (data) => {
-//     console.log('[Deepgram Live] Transcript received:', data.channel.alternatives[0].transcript);
-//     // Handle transcript data (e.g., send to frontend or conversation logic)
-//   });
-//   connection.on(LiveTranscriptionEvents.Close, () => console.log('[Deepgram Live] Connection closed.'));
-//   connection.on(LiveTranscriptionEvents.Error, (error) => console.error('[Deepgram Live] Error:', error));
-//   return connection; // Return the connection object to send audio data to
-// }; 
+/**
+ * Transcribes audio from a URL using Deepgram.
+ * @param audioUrl - The URL of the audio file to transcribe.
+ * @returns A Promise resolving to the transcription text or null if failed.
+ */
+export const transcribeSpeechFromUrl = async (
+  audioUrl: string
+): Promise<string | null> => {
+  if (!deepgramClient) {
+    console.warn('Deepgram client not initialized (API key missing?). Cannot transcribe.');
+    return null;
+  }
+
+  console.log(`[Deepgram] Received request to transcribe audio from URL: ${audioUrl}`);
+
+  try {
+    const { result, error } = await deepgramClient.listen.prerecorded.transcribeUrl(
+      {
+        url: audioUrl,
+      },
+      {
+        model: 'nova-2',
+        smart_format: true,
+        language: 'en-US',
+      }
+    );
+    
+    if (error) throw error;
+    if (!result) throw new Error('No transcription result received.');
+    
+    const transcript = result.results.channels[0].alternatives[0].transcript;
+    console.log(`[Deepgram] Transcription from URL: ${transcript}`);
+    return transcript;
+
+  } catch (error) {
+    console.error('[Deepgram] Error transcribing speech from URL:', error);
+    return null;
+  }
+};
+
+/**
+ * Sets up a live transcription connection for real-time speech recognition.
+ * @param options - Configuration options for the live transcription.
+ * @param onTranscript - Callback function to handle transcript data.
+ * @returns The live transcription connection object or null if initialization failed.
+ */
+export const setupLiveTranscription = (
+  options: {
+    language?: string;
+    model?: string;
+    encoding?: string;
+    sampleRate?: number;
+  } = {},
+  onTranscript: (transcript: string) => void
+) => {
+  if (!deepgramClient) {
+    console.warn('Deepgram client not initialized (API key missing?). Cannot setup live transcription.');
+    return null;
+  }
+
+  const connection = deepgramClient.listen.live({
+    model: options.model || 'nova-2',
+    language: options.language || 'en-US',
+    encoding: options.encoding || 'linear16',
+    sampleRate: options.sampleRate || 16000,
+    punctuate: true,
+    smart_format: true,
+  });
+
+  connection.on(LiveTranscriptionEvents.Open, () => {
+    console.log('[Deepgram Live] Connection opened.');
+  });
+
+  connection.on(LiveTranscriptionEvents.Transcript, (data) => {
+    const transcript = data.channel.alternatives[0].transcript;
+    if (transcript.trim()) {
+      console.log('[Deepgram Live] Transcript received:', transcript);
+      onTranscript(transcript);
+    }
+  });
+
+  connection.on(LiveTranscriptionEvents.Close, () => {
+    console.log('[Deepgram Live] Connection closed.');
+  });
+
+  connection.on(LiveTranscriptionEvents.Error, (error) => {
+    console.error('[Deepgram Live] Error:', error);
+  });
+
+  return connection;
+};       

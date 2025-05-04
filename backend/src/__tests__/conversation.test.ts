@@ -36,7 +36,8 @@ describe('POST /api/conversation', () => {
       .send({ message: userMessage });
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ reply: mockReply });
+    expect(response.body).toHaveProperty('reply', mockReply);
+    expect(response.body).toHaveProperty('sessionId');
     expect(mockGetClaudeResponse).toHaveBeenCalledTimes(1);
     expect(mockGetClaudeResponse).toHaveBeenCalledWith(userMessage);
     expect(mockAddMessagePair).toHaveBeenCalledTimes(1);
@@ -96,4 +97,4 @@ describe('POST /api/conversation', () => {
       console.error('Error during test cleanup:', error);
     }
   });
-});  
+});    
