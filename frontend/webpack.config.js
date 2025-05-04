@@ -50,5 +50,8 @@ module.exports = {
         target: 'http://localhost:4000',
       }
     ],
+    allowedHosts: 'all',
+    host: '0.0.0.0',
+    historyApiFallback: true,
   },
 };
