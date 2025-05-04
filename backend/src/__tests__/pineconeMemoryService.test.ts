@@ -1,6 +1,9 @@
 import { describe, expect, test, beforeEach, jest } from '@jest/globals';
 import { PineconeVectorMemory, createPineconeMemory } from '../services/pineconeMemoryService';
-import { HumanMessage, AIMessage } from '@langchain/core/messages';
+import { /* Unused imports commented out
+  HumanMessage, 
+  AIMessage 
+*/ } from '@langchain/core/messages';
 
 jest.mock('../clients/pineconeClient', () => {
   return {
@@ -20,7 +23,7 @@ import { upsertVectors, queryVectors } from '../clients/pineconeClient';
 import { generateEmbedding } from '../services/embeddingService';
 
 const mockUpsertVectors = upsertVectors as jest.MockedFunction<typeof upsertVectors>;
-const mockQueryVectors = queryVectors as jest.MockedFunction<typeof queryVectors>;
+const _mockQueryVectors = queryVectors as jest.MockedFunction<typeof queryVectors>;
 
 describe('Pinecone Memory Service', () => {
   const sessionId = 'test-session-123';
@@ -39,8 +42,8 @@ describe('Pinecone Memory Service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     
-    const { initializePinecone } = require('../clients/pineconeClient');
-    (initializePinecone as jest.Mock).mockImplementation(() => Promise.resolve(mockPineconeClient));
+    jest.spyOn(require('../clients/pineconeClient') as any, 'initializePinecone')
+      .mockImplementation(() => Promise.resolve(mockPineconeClient));
     
     (generateEmbedding as jest.Mock).mockImplementation(() => Promise.resolve(new Array(1536).fill(0.1)));
   });

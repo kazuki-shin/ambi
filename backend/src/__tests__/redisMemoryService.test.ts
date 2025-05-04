@@ -16,7 +16,9 @@ jest.mock('../clients/redisClient', () => ({
   getRedisClient: jest.fn()
 }));
 
+import * as redisMemoryServiceModule from '../services/redisMemoryService';
 import { 
+  RedisBufferWindowMemory,
   createRedisMemory, 
   addRedisMessagePair, 
   getRedisHistory, 
@@ -74,8 +76,8 @@ describe('Redis Memory Service', () => {
       clear: jest.fn().mockImplementation(() => Promise.resolve())
     };
     
-    jest.spyOn(require('../services/redisMemoryService'), 'createRedisMemory')
-      .mockReturnValue(mockMemory);
+    jest.spyOn(redisMemoryServiceModule, 'createRedisMemory')
+      .mockReturnValue(mockMemory as unknown as RedisBufferWindowMemory);
     
     await addRedisMessagePair(sessionId, userMessage, aiMessage);
     
@@ -88,7 +90,7 @@ describe('Redis Memory Service', () => {
     
     (memoryService.addMessagePair as jest.Mock).mockClear();
     
-    jest.spyOn(require('../services/redisMemoryService'), 'createRedisMemory')
+    jest.spyOn(redisMemoryServiceModule, 'createRedisMemory')
       .mockReturnValue(null);
     
     await addRedisMessagePair(sessionId, userMessage, aiMessage);
@@ -109,8 +111,8 @@ describe('Redis Memory Service', () => {
       clear: jest.fn().mockImplementation(() => Promise.resolve())
     };
     
-    jest.spyOn(require('../services/redisMemoryService'), 'createRedisMemory')
-      .mockReturnValue(mockMemory);
+    jest.spyOn(redisMemoryServiceModule, 'createRedisMemory')
+      .mockReturnValue(mockMemory as unknown as RedisBufferWindowMemory);
     
     const result = await getRedisHistory(sessionId);
     
@@ -125,7 +127,7 @@ describe('Redis Memory Service', () => {
     
     (memoryService.getHistory as jest.Mock).mockClear();
     
-    jest.spyOn(require('../services/redisMemoryService'), 'createRedisMemory')
+    jest.spyOn(redisMemoryServiceModule, 'createRedisMemory')
       .mockReturnValue(null);
     
     const result = await getRedisHistory(sessionId);
@@ -142,8 +144,8 @@ describe('Redis Memory Service', () => {
       clear: jest.fn().mockImplementation(() => Promise.resolve())
     };
     
-    jest.spyOn(require('../services/redisMemoryService'), 'createRedisMemory')
-      .mockReturnValue(mockMemory);
+    jest.spyOn(redisMemoryServiceModule, 'createRedisMemory')
+      .mockReturnValue(mockMemory as unknown as RedisBufferWindowMemory);
     
     await clearRedisHistory(sessionId);
     
@@ -155,7 +157,7 @@ describe('Redis Memory Service', () => {
     
     (memoryService.clearHistory as jest.Mock).mockClear();
     
-    jest.spyOn(require('../services/redisMemoryService'), 'createRedisMemory')
+    jest.spyOn(redisMemoryServiceModule, 'createRedisMemory')
       .mockReturnValue(null);
     
     await clearRedisHistory(sessionId);
