@@ -38,8 +38,14 @@ Ambi is an AI-powered conversational companion designed to reduce loneliness and
     ```
 2.  **Set up Backend Environment:**
     *   Navigate to the backend directory: `cd backend`
-    *   Copy the example environment file: `cp .env.example .env`
-    *   **Edit `backend/.env`**: Fill in *all* required API keys and connection strings (MongoDB, Redis, Anthropic, ElevenLabs, Deepgram). Refer to `backend/.env.example` for variable names.
+    *   Create a `.env` file for your environment variables. You can copy the example:
+        ```bash
+        cp .env.example .env
+        ```
+    *   **Edit `backend/.env`**: Fill in *all* required API keys and connection strings (Redis, Anthropic, ElevenLabs, Deepgram, Pinecone, etc.). Refer to `backend/.env.example` for the full list of required variables.
+    *   **Configure Interaction Mode**: The `INTERACTION_MODE` variable in `.env` controls the primary interaction method:
+        *   `INTERACTION_MODE=voice` (Default): Uses speech-to-text (Deepgram) and text-to-speech (ElevenLabs). Requires relevant API keys.
+        *   `INTERACTION_MODE=text`: Disables voice input/output, relying only on text. Useful for development or if voice services are unavailable.
 3.  **Install Backend Dependencies:**
     *   While in the `backend` directory:
         ```bash
@@ -124,9 +130,16 @@ This script will:
 
 ### Required Environment Variables
 
-The memory system requires the following environment variables:
+The backend requires several environment variables for API keys and service connections. Please refer to the `backend/.env.example` file for a complete list and descriptions.
 
-- `REDIS_URL`: Connection URL for Redis
-- `PINECONE_API_KEY`: API key for Pinecone
-- `PINECONE_INDEX_NAME`: Name of the Pinecone index
-- `OPENAI_API_KEY`: API key for OpenAI (used for embeddings)
+Key variables include:
+- `NODE_ENV`: Set to `development`, `production`, or `test`.
+- `PORT`: The port the backend server runs on.
+- `INTERACTION_MODE`: Controls voice/text interaction (see Setup section).
+- `REDIS_URL`: Connection URL for Redis (short-term memory).
+- `PINECONE_API_KEY`: API key for Pinecone (long-term memory).
+- `PINECONE_INDEX_NAME`: Name of the Pinecone index.
+- `ANTHROPIC_API_KEY`: API key for Claude (core LLM).
+- `DEEPGRAM_API_KEY`: API key for Deepgram (speech-to-text).
+- `ELEVENLABS_API_KEY`: API key for ElevenLabs (text-to-speech).
+- `OPENAI_API_KEY`: API key for OpenAI (used for embeddings).
