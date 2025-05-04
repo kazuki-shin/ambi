@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-let pinecone: Pinecone | null = null;
+const pinecone: Pinecone | null = null;
 
 /**
  * Initializes the Pinecone client.
@@ -20,6 +20,11 @@ export const initializePinecone = async () => {
 
   if (!apiKey) {
     console.warn('PINECONE_API_KEY not found in environment variables. Pinecone functions will be disabled.');
+    return null;
+  }
+
+  if (process.env.NODE_ENV === 'test') {
+    console.log('Test environment detected. Skipping Pinecone connection.');
     return null;
   }
 
@@ -56,4 +61,4 @@ export const queryVector = async (/* params */) => {
   console.log('Querying vector from Pinecone (stub)...');
   // Add actual query logic here in later phases
   throw new Error('Pinecone queryVector function not implemented yet.');
-}; 
+};   

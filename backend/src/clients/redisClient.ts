@@ -5,6 +5,9 @@ dotenv.config();
 
 let redisClient: Redis | null = null;
 
+// Export client for testing purposes
+export { redisClient };
+
 /**
  * Initializes the Redis client.
  * NOTE: In Phase 1, this is just a stub and doesn't actually connect unless REDIS_URL is set.
@@ -20,6 +23,11 @@ export const initializeRedis = () => {
   if (!redisUrl) {
     console.warn('REDIS_URL not found in environment variables. Redis functions will be disabled or use mock data.');
     // Optionally, you could implement a simple in-memory mock here for dev
+    return null;
+  }
+
+  if (process.env.NODE_ENV === 'test') {
+    console.log('Test environment detected. Skipping Redis connection.');
     return null;
   }
 
@@ -77,4 +85,4 @@ export const getRedisValue = async (key: string): Promise<string | null> => {
   }
   console.log(`Getting Redis key ${key} (stub)...`);
   return client.get(key);
-}; 
+};   

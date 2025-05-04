@@ -15,8 +15,10 @@ dotenv.config();
 connectDB();
 
 // Initialize External Clients
-initializeRedis();
-initializePinecone();
+if (process.env.NODE_ENV !== 'test') {
+  initializeRedis();
+  initializePinecone();
+}
 
 const app = express();
 app.use(cors());
@@ -42,7 +44,7 @@ app.post('/api/conversation', async (req: Request, res: Response) => {
   const { message, userId, sessionId } = req.body as ConversationRequest;
   const currentSessionId = sessionId || `session_${Date.now()}_${Math.random().toString(36).substring(7)}`;
   console.log(`Received message: "${message}" from user: ${userId || 'unknown'} in session: ${currentSessionId}`);
-  const history = getHistory(currentSessionId);
+  const _history = getHistory(currentSessionId);
   const ambiReply = await getClaudeResponse(message);
   addMessagePair(currentSessionId, message, ambiReply);
 
@@ -70,6 +72,12 @@ app.post('/api/conversation', async (req: Request, res: Response) => {
 */
 
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-}); 
+
+// Only start listening if the file is run directly (not imported as a module)
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
+export default app; // Export the app instance for testing   

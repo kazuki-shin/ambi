@@ -8,7 +8,17 @@ const connectDB = async () => {
 
   if (!mongoUri) {
     console.error('Error: MONGODB_URI is not defined in the environment variables.');
-    process.exit(1); // Exit the process if the DB URI is missing
+    // Exit only if not in test environment
+    if (process.env.NODE_ENV !== 'test') {
+      process.exit(1); 
+    }
+    return; // Don't proceed if URI is missing
+  }
+
+  // Skip actual MongoDB connection in test environment
+  if (process.env.NODE_ENV === 'test') {
+    console.log('Test environment detected. Skipping MongoDB connection.');
+    return;
   }
 
   try {
@@ -20,9 +30,11 @@ const connectDB = async () => {
     } else {
       console.error('An unknown error occurred during MongoDB connection');
     }
-    // Exit process with failure
-    process.exit(1);
+    // Exit process with failure only if not in test environment
+    if (process.env.NODE_ENV !== 'test') {
+      process.exit(1);
+    }
   }
 };
 
-export default connectDB; 
+export default connectDB;   

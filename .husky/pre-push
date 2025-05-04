@@ -1,0 +1,18 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "Running backend tests before push..."
+
+# Navigate to backend directory and run tests
+cd backend || exit 1 # Exit if cd fails
+npm test
+TEST_EXIT_CODE=$?
+cd .. # Go back to root
+
+if [ $TEST_EXIT_CODE -ne 0 ]; then
+  echo "Backend tests failed (Exit Code: $TEST_EXIT_CODE). Push aborted."
+  exit 1
+fi
+
+echo "Backend tests passed."
+exit 0 
