@@ -15,6 +15,12 @@ const connectDB = async () => {
     return; // Don't proceed if URI is missing
   }
 
+  // Skip actual MongoDB connection in test environment
+  if (process.env.NODE_ENV === 'test') {
+    console.log('Test environment detected. Skipping MongoDB connection.');
+    return;
+  }
+
   try {
     await mongoose.connect(mongoUri);
     console.log('MongoDB Connected...');
@@ -31,4 +37,4 @@ const connectDB = async () => {
   }
 };
 
-export default connectDB; 
+export default connectDB;   
