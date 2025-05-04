@@ -62,25 +62,33 @@ export const getClaudeResponse = async (
 
     const systemPrompt = "You are Ambi, a friendly and helpful companion. You have access to the user's conversation history and can reference past interactions. Be concise but helpful.";
 
-    const historyMessages = convertToAnthropicMessages(contextMessages);
+    const anthropicMessages = [];
     
-    const allMessages = [...historyMessages];
-    if (allMessages.length === 0 || allMessages[allMessages.length - 1].role !== 'user') {
-      allMessages.push({ role: 'user', content: userMessage });
+    for (const message of contextMessages) {
+      if (message instanceof HumanMessage) {
+        anthropicMessages.push({ 
+          role: 'user', 
+          content: typeof message.content === 'string' ? message.content : String(message.content) 
+        });
+      } else if (message instanceof AIMessage) {
+        anthropicMessages.push({ 
+          role: 'assistant', 
+          content: typeof message.content === 'string' ? message.content : String(message.content) 
+        });
+      }
     }
-
-    const formattedMessages = allMessages.map(msg => ({
-      role: msg.role,
-      content: msg.content
-    }));
+    
+    if (anthropicMessages.length === 0 || anthropicMessages[anthropicMessages.length - 1].role !== 'user') {
+      anthropicMessages.push({ role: 'user', content: userMessage });
+    }
     
     const msg = await anthropic.messages.create({
       model: 'claude-3-5-sonnet-20240620',
       max_tokens: 300, // Increased for more detailed responses
       temperature: 0.7,
       system: systemPrompt,
-      messages: formattedMessages,
-    });
+      messages: anthropicMessages,
+    } as any);
 
     // Extract the text content from the response
     let responseText = 'Could not get a response text.'; // Default fallback
@@ -95,4 +103,4 @@ export const getClaudeResponse = async (
     console.error('Error communicating with Anthropic API:', error);
     return 'Sorry, I encountered an error trying to respond.';
   }
-};      
+};            

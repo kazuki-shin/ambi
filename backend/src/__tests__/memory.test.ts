@@ -1,20 +1,18 @@
 import { describe, expect, test, beforeEach, jest } from '@jest/globals';
 import { addToMemory, getRecentHistory, getRelevantMemories, buildMemoryContext } from '../services/memoryManager';
-import { createRedisMemory } from '../services/redisMemoryService';
-import { createPineconeMemory } from '../services/pineconeMemoryService';
 
 jest.mock('../services/redisMemoryService', () => ({
   createRedisMemory: jest.fn(),
-  addRedisMessagePair: jest.fn().mockResolvedValue(undefined),
-  getRedisHistory: jest.fn().mockResolvedValue([]),
-  clearRedisHistory: jest.fn().mockResolvedValue(undefined),
+  addRedisMessagePair: jest.fn().mockImplementation(() => Promise.resolve()),
+  getRedisHistory: jest.fn().mockImplementation(() => Promise.resolve([])),
+  clearRedisHistory: jest.fn().mockImplementation(() => Promise.resolve()),
 }));
 
 jest.mock('../services/pineconeMemoryService', () => ({
-  createPineconeMemory: jest.fn().mockReturnValue({
-    saveContext: jest.fn().mockResolvedValue(undefined),
-    loadMemoryVariables: jest.fn().mockResolvedValue({ relevantHistory: [] }),
-  }),
+  createPineconeMemory: jest.fn().mockImplementation(() => ({
+    saveContext: jest.fn().mockImplementation(() => Promise.resolve()),
+    loadMemoryVariables: jest.fn().mockImplementation(() => Promise.resolve({ relevantHistory: [] })),
+  })),
   PineconeVectorMemory: jest.fn(),
 }));
 
@@ -29,15 +27,16 @@ describe('Memory Manager', () => {
 
   test('addToMemory should add messages to both memory systems', async () => {
     const mockPineconeMemory = {
-      saveContext: jest.fn().mockResolvedValue(undefined),
+      saveContext: jest.fn().mockImplementation(() => Promise.resolve()),
     };
     
-    (createPineconeMemory as jest.Mock).mockReturnValue(mockPineconeMemory);
+    const { createPineconeMemory } = require('../services/pineconeMemoryService');
+    createPineconeMemory.mockReturnValue(mockPineconeMemory);
     
     await addToMemory(sessionId, userMessage, aiMessage);
     
-    expect(require('../services/redisMemoryService').addRedisMessagePair)
-      .toHaveBeenCalledWith(sessionId, userMessage, aiMessage);
+    const { addRedisMessagePair } = require('../services/redisMemoryService');
+    expect(addRedisMessagePair).toHaveBeenCalledWith(sessionId, userMessage, aiMessage);
     
     expect(mockPineconeMemory.saveContext).toHaveBeenCalledWith(
       { input: userMessage, sessionId },
@@ -51,14 +50,13 @@ describe('Memory Manager', () => {
       { content: aiMessage, type: 'ai' },
     ];
     
-    (require('../services/redisMemoryService').getRedisHistory as jest.Mock)
-      .mockResolvedValue(mockHistory);
+    const { getRedisHistory } = require('../services/redisMemoryService');
+    getRedisHistory.mockImplementation(() => Promise.resolve(mockHistory));
     
     const result = await getRecentHistory(sessionId);
     
     expect(result).toEqual(mockHistory);
-    expect(require('../services/redisMemoryService').getRedisHistory)
-      .toHaveBeenCalledWith(sessionId);
+    expect(getRedisHistory).toHaveBeenCalledWith(sessionId);
   });
 
   test('getRelevantMemories should retrieve memories from Pinecone', async () => {
@@ -68,12 +66,13 @@ describe('Memory Manager', () => {
     ];
     
     const mockPineconeMemory = {
-      loadMemoryVariables: jest.fn().mockResolvedValue({
+      loadMemoryVariables: jest.fn().mockImplementation(() => Promise.resolve({
         relevantHistory: mockRelevantMemories,
-      }),
+      })),
     };
     
-    (createPineconeMemory as jest.Mock).mockReturnValue(mockPineconeMemory);
+    const { createPineconeMemory } = require('../services/pineconeMemoryService');
+    createPineconeMemory.mockReturnValue(mockPineconeMemory);
     
     const result = await getRelevantMemories(sessionId, userMessage);
     
@@ -93,16 +92,17 @@ describe('Memory Manager', () => {
       { content: 'Relevant response', type: 'ai' },
     ];
     
-    (require('../services/redisMemoryService').getRedisHistory as jest.Mock)
-      .mockResolvedValue(mockRecentHistory);
+    const { getRedisHistory } = require('../services/redisMemoryService');
+    getRedisHistory.mockImplementation(() => Promise.resolve(mockRecentHistory));
     
     const mockPineconeMemory = {
-      loadMemoryVariables: jest.fn().mockResolvedValue({
+      loadMemoryVariables: jest.fn().mockImplementation(() => Promise.resolve({
         relevantHistory: mockRelevantMemories,
-      }),
+      })),
     };
     
-    (createPineconeMemory as jest.Mock).mockReturnValue(mockPineconeMemory);
+    const { createPineconeMemory } = require('../services/pineconeMemoryService');
+    createPineconeMemory.mockReturnValue(mockPineconeMemory);
     
     const result = await buildMemoryContext(sessionId, userMessage);
     
@@ -116,18 +116,19 @@ describe('Memory Manager', () => {
 
   test('buildMemoryContext should handle errors gracefully', async () => {
     const mockPineconeMemory = {
-      loadMemoryVariables: jest.fn().mockRejectedValue(new Error('Test error')),
+      loadMemoryVariables: jest.fn().mockImplementation(() => Promise.reject(new Error('Test error'))),
     };
     
-    (createPineconeMemory as jest.Mock).mockReturnValue(mockPineconeMemory);
+    const { createPineconeMemory } = require('../services/pineconeMemoryService');
+    createPineconeMemory.mockReturnValue(mockPineconeMemory);
     
     const mockRecentHistory = [
       { content: 'Recent message', type: 'human' },
       { content: 'Recent response', type: 'ai' },
     ];
     
-    (require('../services/redisMemoryService').getRedisHistory as jest.Mock)
-      .mockResolvedValue(mockRecentHistory);
+    const { getRedisHistory } = require('../services/redisMemoryService');
+    getRedisHistory.mockImplementation(() => Promise.resolve(mockRecentHistory));
     
     const result = await buildMemoryContext(sessionId, userMessage);
     

@@ -3,26 +3,26 @@ import mongoose from 'mongoose'; // Import mongoose for disconnect
 import { redisClient } from '../clients/redisClient'; // Import redisClient for disconnect
 import app from '../index'; // Import the exported Express app
 import { getClaudeResponse } from '../clients/claudeClient';
-import { addMessagePair, getHistory } from '../services/memoryService';
+import { addToMemory, getRecentHistory } from '../services/memoryManager';
 
 // Mock the external dependencies
 jest.mock('../clients/claudeClient');
-jest.mock('../services/memoryService');
+jest.mock('../services/memoryManager');
 
 // Define mock types for stricter type checking in mocks
 const mockGetClaudeResponse = getClaudeResponse as jest.MockedFunction<typeof getClaudeResponse>; 
-const mockAddMessagePair = addMessagePair as jest.MockedFunction<typeof addMessagePair>;
-const mockGetHistory = getHistory as jest.MockedFunction<typeof getHistory>;
+const mockAddToMemory = addToMemory as jest.MockedFunction<typeof addToMemory>;
+const mockGetRecentHistory = getRecentHistory as jest.MockedFunction<typeof getRecentHistory>;
 
 describe('POST /api/conversation', () => {
   beforeEach(() => {
     // Reset mocks before each test
     mockGetClaudeResponse.mockClear();
-    mockAddMessagePair.mockClear();
-    mockGetHistory.mockClear();
+    mockAddToMemory.mockClear();
+    mockGetRecentHistory.mockClear();
 
     // Default mock implementations
-    mockGetHistory.mockReturnValue([]); // Return empty history by default
+    mockGetRecentHistory.mockResolvedValue([]); // Return empty history by default
     mockGetClaudeResponse.mockResolvedValue('Mocked Claude response.'); // Return a simple string
   });
 
@@ -39,10 +39,10 @@ describe('POST /api/conversation', () => {
     expect(response.body).toHaveProperty('reply', mockReply);
     expect(response.body).toHaveProperty('sessionId');
     expect(mockGetClaudeResponse).toHaveBeenCalledTimes(1);
-    expect(mockGetClaudeResponse).toHaveBeenCalledWith(userMessage);
-    expect(mockAddMessagePair).toHaveBeenCalledTimes(1);
+    expect(mockGetClaudeResponse).toHaveBeenCalledWith(userMessage, expect.stringContaining('session_'));
+    expect(mockAddToMemory).toHaveBeenCalledTimes(1);
     // Check that session ID was generated and passed (optional stricter check)
-    expect(mockAddMessagePair).toHaveBeenCalledWith(
+    expect(mockAddToMemory).toHaveBeenCalledWith(
       expect.stringContaining('session_'), // Check if a session ID was generated
       userMessage,
       mockReply
@@ -60,8 +60,8 @@ describe('POST /api/conversation', () => {
       .post('/api/conversation')
       .send({ message: userMessage, sessionId: sessionId });
 
-    expect(mockGetHistory).toHaveBeenCalledWith(sessionId);
-    expect(mockAddMessagePair).toHaveBeenCalledWith(sessionId, userMessage, mockReply);
+    expect(mockGetRecentHistory).toHaveBeenCalledWith(sessionId);
+    expect(mockAddToMemory).toHaveBeenCalledWith(sessionId, userMessage, mockReply);
   });
 
   it('should return 500 if Claude client fails', async () => {
@@ -78,7 +78,7 @@ describe('POST /api/conversation', () => {
     expect(response.status).toBe(500);
     // We may not get a predictable body, so commenting out body check
     // expect(response.body).toEqual({ error: 'Internal Server Error' }); // Or similar
-    expect(mockAddMessagePair).not.toHaveBeenCalled();
+    expect(mockAddToMemory).not.toHaveBeenCalled();
   });
 
   // Add more tests: e.g., missing message body (should be handled by express.json typically or validation)
@@ -97,4 +97,4 @@ describe('POST /api/conversation', () => {
       console.error('Error during test cleanup:', error);
     }
   });
-});    
+});                

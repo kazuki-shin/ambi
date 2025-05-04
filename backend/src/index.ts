@@ -61,6 +61,8 @@ app.post('/api/conversation', async (req: Request, res: Response) => {
   const currentSessionId = sessionId || `session_${Date.now()}_${Math.random().toString(36).substring(7)}`;
   console.log(`Received message: "${message}" from user: ${userId || 'unknown'} in session: ${currentSessionId}`);
   
+  const recentHistory = await getRecentHistory(currentSessionId);
+  
   const ambiReply = await getClaudeResponse(message, currentSessionId);
   
   await addToMemory(currentSessionId, message, ambiReply);
@@ -92,6 +94,8 @@ app.post('/api/voice-conversation', (req: Request, res: Response) => {
         }
         
         console.log(`[Voice Conversation] Transcribed text: "${transcribedText}"`);
+        
+        const recentHistory = await getRecentHistory(currentSessionId);
         
         const ambiReply = await getClaudeResponse(transcribedText, currentSessionId);
         
@@ -140,4 +144,4 @@ if (require.main === module) {
   });
 }
 
-export default app; // Export the app instance for testing                                                                                                            
+export default app; // Export the app instance for testing                                                                                                                                                                                                                        
