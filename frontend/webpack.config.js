@@ -53,6 +53,11 @@ module.exports = {
       {
         context: ['/api'],
         target: 'http://localhost:4000',
+        changeOrigin: true,
+        secure: false,
+        headers: {
+          Connection: 'keep-alive'
+        }
       }
     ],
     allowedHosts: 'all',
