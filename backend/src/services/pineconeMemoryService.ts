@@ -56,9 +56,15 @@ export class PineconeVectorMemory extends BaseMemory {
   /**
    * Loads memory variables based on the input values.
    * @param values - The input values.
+   * @param filter - Optional metadata filter object for Pinecone query.
+   * @param minPriority - Optional minimum priority level to retrieve (1-3).
    * @returns A promise that resolves with the memory variables.
    */
-  async loadMemoryVariables(values: InputValues): Promise<MemoryVariables> {
+  async loadMemoryVariables(
+    values: InputValues,
+    filter?: Record<string, unknown>,
+    minPriority?: number
+  ): Promise<MemoryVariables> {
     const query = values[this.inputKey] as string;
 
     if (!query) {
@@ -71,11 +77,24 @@ export class PineconeVectorMemory extends BaseMemory {
       // Increase topK to fetch more potential matches (human + AI pairs)
       const increasedTopK = this.maxResults * 2; // Example: fetch double
 
+      // Construct the filter object
+      let finalFilter = filter || {};
+      if (minPriority && minPriority >= 1 && minPriority <= 3) {
+        // Pinecone filter for number >= value
+        finalFilter = { 
+          ...finalFilter,
+          priority: { $gte: minPriority }
+        };
+      }
+
       const results = await queryVectors(
         queryEmbedding,
         increasedTopK,
-        this.namespace
+        this.namespace,
+        finalFilter
       );
+
+      console.log('[TEST DEBUG] Raw results from mocked queryVectors:', JSON.stringify(results, null, 2));
 
       if (!results || !results.matches.length) {
         this.log("No matches found in Pinecone.");
@@ -143,6 +162,8 @@ export class PineconeVectorMemory extends BaseMemory {
         }
       }
       
+      console.log('[TEST DEBUG] Reconstructed relevantMessages before dedupe:', JSON.stringify(relevantMessages, null, 2));
+
       // Deduplicate messages
       const uniqueMessages = relevantMessages.filter((msg, index, self) =>
         index === self.findIndex((m) => JSON.stringify(m) === JSON.stringify(msg))
