@@ -22,8 +22,8 @@ module.exports = {
         use: {
           loader: 'ts-loader',
           options: {
-            configFile: 'tsconfig.web.json'
-          }
+            configFile: 'tsconfig.web.json',
+          },
         },
         exclude: /node_modules/,
       },
@@ -56,9 +56,9 @@ module.exports = {
         changeOrigin: true,
         secure: false,
         headers: {
-          Connection: 'keep-alive'
-        }
-      }
+          Connection: 'keep-alive',
+        },
+      },
     ],
     allowedHosts: 'all',
     host: '0.0.0.0',

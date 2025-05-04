@@ -46,7 +46,7 @@ export const sendConversationMessage = async (
   } catch (error) {
     console.error('[API Client] Failed to send message:', error);
     // Re-throw or return a specific error structure
-    throw error; 
+    throw error;
   }
 };
 
@@ -70,13 +70,13 @@ export const sendVoiceMessage = async (
 ): Promise<VoiceConversationResponse> => {
   try {
     console.log(`[API Client] Sending voice message, Session: ${sessionId}`);
-    
+
     const arrayBuffer = await audioBlob.arrayBuffer();
-    
+
     const queryParams = new URLSearchParams();
-    if (userId) queryParams.append('userId', userId);
-    if (sessionId) queryParams.append('sessionId', sessionId);
-    
+    if (userId) {queryParams.append('userId', userId);}
+    if (sessionId) {queryParams.append('sessionId', sessionId);}
+
     const response = await fetch(`${BASE_URL}/voice-conversation?${queryParams.toString()}`, {
       method: 'POST',
       headers: {
@@ -103,4 +103,4 @@ export const sendVoiceMessage = async (
     console.error('[API Client] Failed to send voice message:', error);
     throw error;
   }
-};  
+};

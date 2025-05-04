@@ -18,16 +18,16 @@ type SystemStatus = 'IDLE' | 'LISTENING' | 'THINKING' | 'SPEAKING' | 'ERROR';
 const HomeScreen = () => {
   const theme = useTheme<MD3Theme>();
   const styles = createStyles(theme);
-  
+
   // State variables
   const [currentStatus, setCurrentStatus] = useState<SystemStatus>('IDLE');
   const [inputText, setInputText] = useState('');
   const [lastReply, setLastReply] = useState('');
   const [sessionId, setSessionId] = useState<string | undefined>(undefined);
-  
+
   const [isRecording, setIsRecording] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [recordedAudioPath, setRecordedAudioPath] = useState<string | null>(null);
+  const [_recordedAudioPath, _setRecordedAudioPath] = useState<string | null>(null);
   const audioRecorderPlayer = useRef(new AudioRecorderPlayer()).current;
 
   const requestMicrophonePermission = useCallback(async () => {
@@ -52,12 +52,72 @@ const HomeScreen = () => {
     return true; // iOS handles permissions differently
   }, []);
 
+  // Define processVoiceMessage first to avoid circular dependency
+  const processVoiceMessage = useCallback(async (recordedPath: string) => {
+    if (!recordedPath) {return;}
+
+    setLastReply('');
+    setCurrentStatus('THINKING');
+
+    try {
+      const response = await fetch(`file://${recordedPath}`);
+      const audioBlob = await response.blob();
+
+      const voiceResponse = await sendVoiceMessage(audioBlob, undefined, sessionId);
+
+      if (voiceResponse.sessionId) {
+        setSessionId(voiceResponse.sessionId);
+      }
+
+      setLastReply(voiceResponse.textReply);
+
+      setCurrentStatus('SPEAKING');
+
+      // const _base64Audio = voiceResponse.audioReply;
+      const responseAudioPath = Platform.OS === 'ios'
+        ? `${Date.now()}.m4a`
+        : `${Platform.OS === 'android' ? 'sdcard/' : ''}ambi_response_${Date.now()}.mp3`;
+
+      await audioRecorderPlayer.startPlayer(responseAudioPath);
+
+      audioRecorderPlayer.addPlayBackListener((e) => {
+        if (e.currentPosition === e.duration) {
+          audioRecorderPlayer.removePlayBackListener();
+          setCurrentStatus('IDLE');
+          setIsPlaying(false);
+        }
+      });
+
+      setIsPlaying(true);
+    } catch (error) {
+      console.error('Error processing voice message:', error);
+      setLastReply('Error: Could not process voice message.');
+      setCurrentStatus('ERROR');
+    }
+  }, [audioRecorderPlayer, sessionId]);
+
+  const stopRecordingAndSend = useCallback(async () => {
+    if (!isRecording) {return;}
+
+    try {
+      const result = await audioRecorderPlayer.stopRecorder();
+      setIsRecording(false);
+      _setRecordedAudioPath(result);
+      console.log('Recording stopped:', result);
+
+      await processVoiceMessage(result);
+    } catch (error) {
+      console.error('Failed to stop recording:', error);
+      setCurrentStatus('ERROR');
+    }
+  }, [isRecording, audioRecorderPlayer, processVoiceMessage]);
+
   useEffect(() => {
     const setupAudio = async () => {
       await requestMicrophonePermission();
     };
     setupAudio();
-    
+
     return () => {
       if (isRecording) {
         audioRecorderPlayer.stopRecorder();
@@ -78,11 +138,11 @@ const HomeScreen = () => {
 
       setCurrentStatus('LISTENING');
       setIsRecording(true);
-      
-      const audioPath = Platform.OS === 'ios' 
+
+      const audioPath = Platform.OS === 'ios'
         ? 'ambi_recording.m4a'
         : `${Platform.OS === 'android' ? 'sdcard/' : ''}ambi_recording.mp4`;
-      
+
       await audioRecorderPlayer.startRecorder(audioPath);
       console.log('Recording started');
     } catch (error) {
@@ -91,68 +151,9 @@ const HomeScreen = () => {
     }
   }, [audioRecorderPlayer, requestMicrophonePermission]);
 
-  const stopRecordingAndSend = useCallback(async () => {
-    if (!isRecording) return;
-    
-    try {
-      const result = await audioRecorderPlayer.stopRecorder();
-      setIsRecording(false);
-      setRecordedAudioPath(result);
-      console.log('Recording stopped:', result);
-      
-      await processVoiceMessage(result);
-    } catch (error) {
-      console.error('Failed to stop recording:', error);
-      setCurrentStatus('ERROR');
-    }
-  }, [isRecording, audioRecorderPlayer]);
-
-  const processVoiceMessage = useCallback(async (recordedPath: string) => {
-    if (!recordedPath) return;
-    
-    setLastReply('');
-    setCurrentStatus('THINKING');
-    
-    try {
-      const response = await fetch(`file://${recordedPath}`);
-      const audioBlob = await response.blob();
-      
-      const voiceResponse = await sendVoiceMessage(audioBlob, undefined, sessionId);
-      
-      if (voiceResponse.sessionId) {
-        setSessionId(voiceResponse.sessionId);
-      }
-      
-      setLastReply(voiceResponse.textReply);
-      
-      setCurrentStatus('SPEAKING');
-      
-      const base64Audio = voiceResponse.audioReply;
-      const responseAudioPath = Platform.OS === 'ios'
-        ? `${Date.now()}.m4a`
-        : `${Platform.OS === 'android' ? 'sdcard/' : ''}ambi_response_${Date.now()}.mp3`;
-      
-      await audioRecorderPlayer.startPlayer(responseAudioPath);
-      
-      audioRecorderPlayer.addPlayBackListener((e) => {
-        if (e.currentPosition === e.duration) {
-          audioRecorderPlayer.removePlayBackListener();
-          setCurrentStatus('IDLE');
-          setIsPlaying(false);
-        }
-      });
-      
-      setIsPlaying(true);
-    } catch (error) {
-      console.error('Error processing voice message:', error);
-      setLastReply('Error: Could not process voice message.');
-      setCurrentStatus('ERROR');
-    }
-  }, [audioRecorderPlayer, sessionId]);
-
   // Handler for sending text message
   const handleSendMessage = useCallback(async () => {
-    if (!inputText.trim()) return;
+    if (!inputText.trim()) {return;}
 
     const messageToSend = inputText;
     setInputText('');
@@ -168,7 +169,7 @@ const HomeScreen = () => {
       if (response.sessionId) {
         setSessionId(response.sessionId);
       }
-      setCurrentStatus('IDLE'); 
+      setCurrentStatus('IDLE');
     } catch (error) {
       console.error('Error sending message:', error);
       setLastReply('Error: Could not get response from backend.');
@@ -194,8 +195,8 @@ const HomeScreen = () => {
   };
 
   return (
-    <KeyboardAvoidingView 
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.keyboardAvoidingContainer}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
       >
@@ -212,7 +213,7 @@ const HomeScreen = () => {
           <Text style={styles.replyLabel}>Ambi:</Text>
           <Text style={styles.replyText}>{lastReply || '...'}</Text>
         </View>
-        
+
         {/* System Status Display */}
         <View style={styles.statusContainer}>
           <Text style={styles.statusLabel}>Status: </Text>
@@ -229,28 +230,28 @@ const HomeScreen = () => {
             mode="outlined"
             disabled={currentStatus === 'THINKING' || currentStatus === 'LISTENING' || currentStatus === 'SPEAKING'}
           />
-          <Button 
-            mode="contained" 
+          <Button
+            mode="contained"
             onPress={handleSendMessage}
             disabled={!inputText.trim() || currentStatus === 'THINKING' || currentStatus === 'LISTENING' || currentStatus === 'SPEAKING'}
             style={styles.sendButton}
             loading={currentStatus === 'THINKING'}
-            > 
+            >
             Send
           </Button>
         </View>
-        
+
         {/* Voice Controls */}
         <View style={styles.voiceControlsContainer}>
           <IconButton
-            icon={isRecording ? "microphone-off" : "microphone"}
+            icon={isRecording ? 'microphone-off' : 'microphone'}
             mode="contained"
             size={30}
             onPress={isRecording ? stopRecordingAndSend : startRecording}
             disabled={currentStatus === 'THINKING' || currentStatus === 'SPEAKING'}
             style={[
               styles.voiceButton,
-              isRecording && styles.recordingButton
+              isRecording && styles.recordingButton,
             ]}
           />
           <Text style={styles.voiceButtonLabel}>
@@ -364,4 +365,4 @@ const createStyles = (theme: MD3Theme) => StyleSheet.create({
   },
 });
 
-export default HomeScreen;                  
+export default HomeScreen;

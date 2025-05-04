@@ -6,8 +6,7 @@
  */
 
 import React from 'react';
-import { useColorScheme } from 'react-native';
-import { 
+import {
   Provider as PaperProvider,
   // MD3Theme, // Theme type not needed directly here anymore
 } from 'react-native-paper';
@@ -25,15 +24,15 @@ import AppNavigator from './src/navigation/AppNavigator'; // Import the navigato
 // } from 'react-native/Libraries/NewAppScreen';
 
 function App(): React.JSX.Element {
-  const scheme = useColorScheme();
+  // const scheme = useColorScheme();
   // TODO: Configure custom themes later if needed
   // const theme = scheme === 'dark' ? MD3DarkTheme : MD3LightTheme;
 
   return (
     <ReduxProvider store={store}>
-      <PaperProvider /* theme={theme} */> 
+      <PaperProvider /* theme={theme} */>
         {/* Render the AppNavigator instead of direct content */}
-        <AppNavigator /> 
+        <AppNavigator />
       </PaperProvider>
     </ReduxProvider>
   );

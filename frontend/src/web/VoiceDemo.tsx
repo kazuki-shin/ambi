@@ -12,7 +12,7 @@ declare global {
   interface Window {
     MediaRecorder: any;
   }
-  
+
   interface MediaStreamTrack {
     stop(): void;
   }
@@ -23,12 +23,12 @@ const VoiceDemo: React.FC = () => {
   const [lastReply, setLastReply] = useState('');
   const [sessionId, setSessionId] = useState<string | undefined>(undefined);
   const [isRecording, setIsRecording] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  
+  const [_isPlaying, setIsPlaying] = useState(false);
+
   const mediaRecorderRef = useRef<any>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  
+
   useEffect(() => {
     audioRef.current = new Audio();
     if (audioRef.current) {
@@ -37,7 +37,7 @@ const VoiceDemo: React.FC = () => {
         setCurrentStatus('IDLE');
       };
     }
-    
+
     return () => {
       if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
         mediaRecorderRef.current.stop();
@@ -48,37 +48,37 @@ const VoiceDemo: React.FC = () => {
       }
     };
   }, []);
-  
+
   const startRecording = async () => {
     try {
       audioChunksRef.current = [];
-      
+
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         throw new Error('Browser does not support audio recording');
       }
-      
+
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      
+
       if (!window.MediaRecorder) {
         throw new Error('Browser does not support MediaRecorder');
       }
-      
+
       const mediaRecorder = new window.MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
-      
+
       mediaRecorder.ondataavailable = (event: MediaRecorderEvent) => {
         if (event.data.size > 0) {
           audioChunksRef.current.push(event.data);
         }
       };
-      
+
       mediaRecorder.onstop = () => {
         const audioBlob = new Blob(audioChunksRef.current);
         processVoiceMessage(audioBlob);
-        
+
         stream.getTracks().forEach((track: MediaStreamTrack) => track.stop());
       };
-      
+
       setCurrentStatus('LISTENING');
       setIsRecording(true);
       mediaRecorder.start();
@@ -88,28 +88,28 @@ const VoiceDemo: React.FC = () => {
       setLastReply(`Error: ${error instanceof Error ? error.message : 'Could not start recording'}`);
     }
   };
-  
+
   const stopRecording = () => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
     }
   };
-  
+
   const processVoiceMessage = async (audioBlob: Blob) => {
     try {
       setLastReply('');
       setCurrentStatus('THINKING');
-      
+
       const response = await sendVoiceMessage(audioBlob, undefined, sessionId);
-      
+
       if (response.sessionId) {
         setSessionId(response.sessionId);
       }
-      
+
       setLastReply(response.textReply);
       setCurrentStatus('SPEAKING');
-      
+
       if (audioRef.current) {
         const audioUrl = `data:audio/mp3;base64,${response.audioReply}`;
         audioRef.current.src = audioUrl;
@@ -122,7 +122,7 @@ const VoiceDemo: React.FC = () => {
       setCurrentStatus('ERROR');
     }
   };
-  
+
   const getStatusText = () => {
     switch (currentStatus) {
       case 'IDLE': return 'Ready';
@@ -133,7 +133,7 @@ const VoiceDemo: React.FC = () => {
       default: return '';
     }
   };
-  
+
   const getStatusColor = () => {
     switch (currentStatus) {
       case 'IDLE': return '#6200ee';
@@ -144,7 +144,7 @@ const VoiceDemo: React.FC = () => {
       default: return '#6200ee';
     }
   };
-  
+
   return (
     <div className="container">
       <div className="card">
@@ -152,16 +152,16 @@ const VoiceDemo: React.FC = () => {
         <div className="card-content">
           <div className="status-container">
             <span className="status-label">Status:</span>
-            <div className="status-indicator" style={{ backgroundColor: getStatusColor() }}></div>
+            <div className="status-indicator" style={{ backgroundColor: getStatusColor() }} />
             <span className="status-text">{getStatusText()}</span>
-            {currentStatus === 'THINKING' && <div className="spinner"></div>}
+            {currentStatus === 'THINKING' && <div className="spinner" />}
           </div>
-          
+
           <div className="response-container">
             <div className="response-label">Response:</div>
             <div className="response-text">{lastReply || 'No response yet'}</div>
           </div>
-          
+
           <div className="button-container">
             <button
               className={`button ${isRecording ? 'recording-button' : ''}`}
