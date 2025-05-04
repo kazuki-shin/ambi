@@ -1,9 +1,6 @@
 import { describe, expect, test, beforeEach, jest } from '@jest/globals';
 import { PineconeVectorMemory, createPineconeMemory } from '../services/pineconeMemoryService';
-import { /* Unused imports commented out
-  HumanMessage, 
-  AIMessage 
-*/ } from '@langchain/core/messages';
+import { } from '@langchain/core/messages';
 
 jest.mock('../clients/pineconeClient', () => {
   return {
@@ -19,7 +16,7 @@ jest.mock('../services/embeddingService', () => {
   };
 });
 
-import { upsertVectors, queryVectors } from '../clients/pineconeClient';
+import { initializePinecone, upsertVectors, queryVectors } from '../clients/pineconeClient';
 import { generateEmbedding } from '../services/embeddingService';
 
 const mockUpsertVectors = upsertVectors as jest.MockedFunction<typeof upsertVectors>;
@@ -42,8 +39,7 @@ describe('Pinecone Memory Service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     
-    jest.spyOn(require('../clients/pineconeClient') as any, 'initializePinecone')
-      .mockImplementation(() => Promise.resolve(mockPineconeClient));
+    (initializePinecone as jest.Mock).mockImplementation(() => Promise.resolve(mockPineconeClient));
     
     (generateEmbedding as jest.Mock).mockImplementation(() => Promise.resolve(new Array(1536).fill(0.1)));
   });
