@@ -5,7 +5,7 @@ import connectDB from './db/connect';
 import { initializePinecone } from './clients/pineconeClient';
 import { initializeRedis } from './clients/redisClient';
 import { getClaudeResponse } from './clients/claudeClient';
-import { addMessagePair, getHistory } from './services/memoryService';
+import { addToMemory, getRecentHistory } from './services/memoryManager';
 import { voiceService } from './services/voiceService';
 
 dotenv.config();
@@ -59,9 +59,12 @@ app.post('/api/conversation', async (req: Request, res: Response) => {
   const { message, userId, sessionId } = req.body as ConversationRequest;
   const currentSessionId = sessionId || `session_${Date.now()}_${Math.random().toString(36).substring(7)}`;
   console.log(`Received message: "${message}" from user: ${userId || 'unknown'} in session: ${currentSessionId}`);
-  const _history = getHistory(currentSessionId);
-  const ambiReply = await getClaudeResponse(message);
-  addMessagePair(currentSessionId, message, ambiReply);
+  
+  await getRecentHistory(currentSessionId);
+  
+  const ambiReply = await getClaudeResponse(message, currentSessionId);
+  
+  await addToMemory(currentSessionId, message, ambiReply);
 
   const response: ConversationResponse = {
     reply: ambiReply,
@@ -91,9 +94,11 @@ app.post('/api/voice-conversation', (req: Request, res: Response) => {
         
         console.log(`[Voice Conversation] Transcribed text: "${transcribedText}"`);
         
-        const _history = getHistory(currentSessionId);
-        const ambiReply = await getClaudeResponse(transcribedText);
-        addMessagePair(currentSessionId, transcribedText, ambiReply);
+        await getRecentHistory(currentSessionId);
+        
+        const ambiReply = await getClaudeResponse(transcribedText, currentSessionId);
+        
+        await addToMemory(currentSessionId, transcribedText, ambiReply);
         
         const audioReply = await voiceService.textToSpeech.synthesize(ambiReply);
         
@@ -138,4 +143,4 @@ if (require.main === module) {
   });
 }
 
-export default app; // Export the app instance for testing                                                                                                                                                                                                                        
+export default app; // Export the app instance for testing                                                                                                                                                                                                                                                                                                                                                                                                                                                

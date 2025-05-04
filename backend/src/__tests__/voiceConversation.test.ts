@@ -4,7 +4,7 @@ import { redisClient } from '../clients/redisClient';
 import app from '../index';
 import { voiceService } from '../services/voiceService';
 import { getClaudeResponse } from '../clients/claudeClient';
-import { addMessagePair, getHistory } from '../services/memoryService';
+import { addToMemory, getRecentHistory } from '../services/memoryManager';
 
 jest.mock('../services/voiceService', () => ({
   voiceService: {
@@ -17,23 +17,23 @@ jest.mock('../services/voiceService', () => ({
   }
 }));
 jest.mock('../clients/claudeClient');
-jest.mock('../services/memoryService');
+jest.mock('../services/memoryManager');
 
 const mockSpeechToText = voiceService.speechToText.transcribe as jest.MockedFunction<typeof voiceService.speechToText.transcribe>;
 const mockTextToSpeech = voiceService.textToSpeech.synthesize as jest.MockedFunction<typeof voiceService.textToSpeech.synthesize>;
 const mockGetClaudeResponse = getClaudeResponse as jest.MockedFunction<typeof getClaudeResponse>;
-const mockAddMessagePair = addMessagePair as jest.MockedFunction<typeof addMessagePair>;
-const mockGetHistory = getHistory as jest.MockedFunction<typeof getHistory>;
+const mockAddToMemory = addToMemory as jest.MockedFunction<typeof addToMemory>;
+const mockGetRecentHistory = getRecentHistory as jest.MockedFunction<typeof getRecentHistory>;
 
 describe('POST /api/voice-conversation', () => {
   beforeEach(() => {
     mockSpeechToText.mockClear();
     mockTextToSpeech.mockClear();
     mockGetClaudeResponse.mockClear();
-    mockAddMessagePair.mockClear();
-    mockGetHistory.mockClear();
+    mockAddToMemory.mockClear();
+    mockGetRecentHistory.mockClear();
 
-    mockGetHistory.mockReturnValue([]);
+    mockGetRecentHistory.mockResolvedValue([]);
     mockSpeechToText.mockResolvedValue('Transcribed text');
     mockGetClaudeResponse.mockResolvedValue('Mocked Claude response.');
     mockTextToSpeech.mockResolvedValue(Buffer.from('Mocked audio data'));
@@ -63,13 +63,13 @@ describe('POST /api/voice-conversation', () => {
     expect(mockSpeechToText).toHaveBeenCalledWith(expect.any(Buffer));
     
     expect(mockGetClaudeResponse).toHaveBeenCalledTimes(1);
-    expect(mockGetClaudeResponse).toHaveBeenCalledWith(mockTranscribedText);
+    expect(mockGetClaudeResponse).toHaveBeenCalledWith(mockTranscribedText, expect.any(String));
     
     expect(mockTextToSpeech).toHaveBeenCalledTimes(1);
     expect(mockTextToSpeech).toHaveBeenCalledWith(mockClaudeResponse);
     
-    expect(mockAddMessagePair).toHaveBeenCalledTimes(1);
-    expect(mockAddMessagePair).toHaveBeenCalledWith(
+    expect(mockAddToMemory).toHaveBeenCalledTimes(1);
+    expect(mockAddToMemory).toHaveBeenCalledWith(
       expect.stringContaining('session_'),
       mockTranscribedText,
       mockClaudeResponse
@@ -93,8 +93,8 @@ describe('POST /api/voice-conversation', () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty('sessionId', sessionId);
-    expect(mockGetHistory).toHaveBeenCalledWith(sessionId);
-    expect(mockAddMessagePair).toHaveBeenCalledWith(
+    expect(mockGetRecentHistory).toHaveBeenCalledWith(sessionId);
+    expect(mockAddToMemory).toHaveBeenCalledWith(
       sessionId,
       mockTranscribedText,
       mockClaudeResponse
@@ -114,7 +114,7 @@ describe('POST /api/voice-conversation', () => {
     expect(response.body).toHaveProperty('error', 'Failed to transcribe audio');
     expect(mockGetClaudeResponse).not.toHaveBeenCalled();
     expect(mockTextToSpeech).not.toHaveBeenCalled();
-    expect(mockAddMessagePair).not.toHaveBeenCalled();
+    expect(mockAddToMemory).not.toHaveBeenCalled();
   });
 
   it('should return 500 if speech synthesis fails', async () => {
@@ -132,7 +132,7 @@ describe('POST /api/voice-conversation', () => {
     expect(response.body).toHaveProperty('error', 'Failed to synthesize speech');
     expect(mockSpeechToText).toHaveBeenCalled();
     expect(mockGetClaudeResponse).toHaveBeenCalled();
-    expect(mockAddMessagePair).toHaveBeenCalled();
+    expect(mockAddToMemory).toHaveBeenCalled();
   });
 
   it('should return 500 if Claude client fails', async () => {
@@ -149,7 +149,7 @@ describe('POST /api/voice-conversation', () => {
     expect(mockSpeechToText).toHaveBeenCalled();
     expect(mockGetClaudeResponse).toHaveBeenCalled();
     expect(mockTextToSpeech).not.toHaveBeenCalled();
-    expect(mockAddMessagePair).not.toHaveBeenCalled();
+    expect(mockAddToMemory).not.toHaveBeenCalled();
   });
 
   afterAll(async () => {
