@@ -50,9 +50,8 @@ describe('Embedding Service', () => {
   });
 
   test('initializeEmbeddings should return mock embeddings when API key is missing', () => {
+    jest.clearAllMocks();
     delete process.env.OPENAI_API_KEY;
-    
-    jest.resetModules();
     
     const embeddings = embeddingService.initializeEmbeddings();
     
@@ -92,12 +91,14 @@ describe('Embedding Service', () => {
   });
 
   test('generateEmbedding should handle errors gracefully', async () => {
+    jest.clearAllMocks();
+    
     const mockEmbeddings = {
       embedQuery: jest.fn().mockImplementation((): Promise<number[]> => {
-        return Promise.reject(new Error('API Error'));
+        throw new Error('API Error');
       }),
       embedDocuments: jest.fn().mockImplementation((): Promise<number[][]> => {
-        return Promise.reject(new Error('API Error'));
+        throw new Error('API Error');
       })
     };
     
