@@ -1,0 +1,41 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Systematic Debugging Strategy
+
+## Critical Rules
+
+- When faced with a difficult or persistent problem:
+  - Identify and list 5-7 distinct potential root causes for the observed issue.
+  - Analyze the potential causes based on context, logs, and recent changes to determine the 1-2 most likely sources of the problem. Clearly state your reasoning.
+  - Before attempting a code fix, propose adding specific logging statements or using debugging tools to gather data that will validate or invalidate your hypothesis about the most likely cause(s). Explain what information the proposed logging/debugging will provide.
+  - Only proceed with implementing a code fix *after* the validation step confirms the likely cause or provides new insights.
+
+## Examples
+
+<example>
+  **Scenario:** A network request repeatedly fails with a generic 'Network Error'.
+
+  **Agent applies the rule:**
+  1.  **Potential Causes:**
+      -   Incorrect API endpoint URL.
+      -   Missing or invalid API key/authentication token.
+      -   CORS configuration issue on the server.
+      -   Network connectivity issue on the client machine.
+      -   Firewall blocking the request.
+      -   Incorrect request payload format.
+      -   Server-side error returning a non-standard error response.
+  2.  **Most Likely Causes:** Based on recent changes to authentication, the most likely causes are an invalid API key (Cause 2) or a server-side error (Cause 7).
+  3.  **Validation:** "Before fixing, I will add logging to the network request function to print the exact URL being called, the request headers (masking sensitive parts like the API key itself, but confirming its presence/length), and the full status code and body of the error response received from the server. This will help confirm if the URL is correct, if auth is being sent, and what the server is actually responding with."
+  4.  **Fix (After Validation):** *(Agent would proceed only after seeing the logs)*
+</example>
+
+<example type="invalid">
+  **Scenario:** A network request repeatedly fails with a generic 'Network Error'.
+
+  **Agent does NOT apply the rule:**
+  "The request is failing. Let's try changing the API endpoint URL in the code."
+  *(Agent jumps directly to a potential fix without analyzing other causes or validating the assumption)*
+</example>
