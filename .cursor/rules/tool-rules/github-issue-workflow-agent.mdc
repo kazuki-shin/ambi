@@ -1,0 +1,73 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# GitHub Issue Workflow Strategy
+
+## Critical Rules
+
+- **Assign & Understand:**
+    - Ensure the target issue is assigned to the developer starting work.
+        - *Optional Command: `gh issue edit <issue-num> --add-assignee @me`*
+    - Thoroughly review the issue description, comments, and any linked issues/PRs to fully understand the requirements and context.
+        - *Command: `gh issue view <issue-num> --comments | cat`*
+- **Create Feature Branch:**
+    - Check out the latest version of the base branch (usually `main` or `develop`).
+        - *Command: `git checkout main && git pull origin main`*
+    - Create a new branch specifically for the issue. Use a descriptive name, often including the issue number.
+        - *Command: `git checkout -b feat/<issue-num>-short-description`*
+        - *Alternative Command: `gh issue develop <issue-num> --base main --name feat/<issue-num>-short-description` (Assigns and creates branch)*
+- **Develop & Test:**
+    - Implement the required code changes on the feature branch.
+    - Adhere to project coding standards and conventions. (Consider related language-specific rules).
+    - Write and run appropriate tests (unit, integration, etc.) to verify the changes. (Consider `testing-rules`).
+- **Commit Changes:**
+    - Stage the changes (`git add .`).
+    - Commit the changes with clear, concise messages.
+    - **Crucially:** Reference the issue number in the commit message using keywords like `resolves`, `fixes`, `closes` (e.g., `feat: Implement user login (fixes #<issue-num>)`) to enable automatic linking and closing.
+        - *Command: `git commit -m "feat: Short description (fixes #<issue-num>)"`*
+        - *Refer to `tool-rules/git-commit-push-agent` for detailed commit message conventions if available.*
+- **Push Branch:**
+    - Push the feature branch to the remote repository.
+        - *Command: `git push -u origin feat/<issue-num>-short-description`*
+- **Create Pull Request (PR):**
+    - Create a PR from the feature branch targeting the original base branch (`main`/`develop`).
+    - Ensure the PR title is clear and references the issue number (e.g., `feat: Implement user login (#<issue-num>)`).
+    - Write a comprehensive PR description, summarizing changes and **linking the issue** (e.g., "Resolves #<issue-num>"). `gh` often does this automatically.
+    - Assign reviewers and add relevant labels.
+        - *Command: `gh pr create --title "feat: Short description (#<issue-num>)" --body "Resolves #<issue-num>. Description of changes..." --base main --assignee @me --reviewer <reviewer-handle>`*
+- **Review & Iterate:**
+    - Monitor the PR for feedback.
+    - Address comments and requested changes by pushing additional commits to the *same* feature branch. GitHub automatically updates the PR.
+- **Merge & Close:**
+    - Once approved, the PR can be merged (often by a maintainer).
+    - If the commit/PR message used the correct keywords ("resolves #<issue-num>", etc.), the issue should close automatically upon merge. Verify this.
+- **Clean Up:**
+    - After the PR is merged, delete the local and remote feature branches.
+        - *Command: `git checkout main && git pull origin main && git branch -d feat/<issue-num>-short-description && git push origin --delete feat/<issue-num>-short-description`*
+
+## Examples
+
+<example>
+  **Scenario:** User wants to start working on issue #42, "Implement user login".
+
+  **Agent applies the rule:**
+  "Okay, let's start working on issue #42.
+  1.  First, let's assign it to you: `gh issue edit 42 --add-assignee @me`.
+  2.  Make sure you understand the requirements by reviewing the issue: `gh issue view 42 --comments | cat`.
+  3.  Let's create a branch. Ensure you're on the latest main: `git checkout main && git pull origin main`. Then create the branch: `git checkout -b feat/42-user-login`.
+  4.  Now you can implement the login logic and add tests.
+  5.  Once done, commit your changes, making sure to link the issue: `git add . && git commit -m \"feat: Implement user login (fixes #42)\"`.
+  6.  Push the branch: `git push -u origin feat/42-user-login`.
+  7.  Finally, create the PR: `gh pr create --title \"feat: Implement user login (#42)\" --body \"Resolves #42. Added login endpoint and tests.\" --base main --reviewer <review-needed>`.
+  After review and merge, we can clean up the branch."
+</example>
+
+<example type="invalid">
+  **Scenario:** User asks how to fix a bug described in issue #55.
+
+  **Agent does NOT apply the rule effectively:**
+  "To fix issue #55, you should change line 5 in `auth.js` to `return true;`. Then run `git commit -m 'bug fix'` and `git push`."
+  *(Agent provides code but skips crucial workflow steps: assigning, branching, linking the commit/issue, creating a proper PR, testing.)*
+</example>

@@ -1,0 +1,71 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# GitHub Issue Analyzer & Prioritizer Strategy (using gh CLI)
+
+## Critical Rules
+
+- **Scan & Categorize:** Systematically review all open issues using `gh`. Categorize each by:
+    - Bug severity (e.g., critical, high, medium, low) - *Interpret from labels*
+    - Feature impact (e.g., core, enhancement, nice-to-have) - *Interpret from labels*
+    - Implementation complexity (e.g., simple, moderate, complex) - *Interpret from labels*
+    - Issue age (e.g., <1 month, 1-6 months, >6 months) - *Check `createdAt`*
+    - *Command: `gh issue list --state open --json number,title,createdAt,labels --limit 500 | cat` (Ensure piping to `cat` for reliable JSON output. Adjust limit as needed)*
+- **Identify Dependencies:** Actively look for connections between issues:
+    - Explicit mentions in descriptions/comments (e.g., "blocks #123", "related to #456").
+    - Linked Pull Requests which might indicate shared code areas.
+        - *Command: `gh issue view <issue-number> --json number,title,linkedPrs | cat`*
+    - Implicit technical prerequisites or shared user workflows.
+- **Analyze Project Focus:** Determine current project direction by examining:
+    - Recent commit messages (last ~2 weeks).
+        - *Command: `git log --oneline --since='2 weeks ago' | cat`*
+    - Recently merged Pull Requests (last ~2 weeks).
+        - *Command: `gh pr list --state merged --search "merged:>$(date -v-2w +%Y-%m-%d)" --json number,title,mergedAt,baseRefName --limit 100 | cat`*
+    - Maintainer comments indicating priorities. Search comments of potential high-priority issues:
+        - *Command: `gh issue view <high-priority-issue-number> --comments | cat | grep -i 'priority\|blocker\|urgent\|important'`*
+    - Roadmap documents or milestone descriptions, if available.
+        - *Command: `gh milestone list` or check repo files.*
+- **Prioritize Systematically:** Determine the highest priority issues based on a weighted combination of:
+    - Blocker status (explicitly mentioned or inferred from dependencies).
+    - User impact (severity labels, number of users affected if mentioned).
+    - Alignment with current project goals/roadmap/focus (from commit/PR/comment analysis).
+    - Implementation efficiency (consider high impact/low effort based on complexity labels).
+- **Refine Top Candidates:** For the top 3-5 candidates identified, fetch their bodies for more context before finalizing recommendations.
+    - *Command: `gh issue view <candidate-issue-number> --json number,title,body | cat`*
+- **Recommend Top Issues (Top 3):** Based on the refined understanding, for each recommended issue:
+    - Provide a concise one-sentence summary (using info from the issue body).
+    - List explicit, actionable subtasks required for completion (informed by the body).
+    - Estimate relative effort for each subtask (e.g., S, M, L) based on labels and body.
+    - Identify potential technical challenges or unknowns (informed by the body).
+    - Suggest specific implementation approaches or areas to investigate.
+- **Suggest Timeline:** Propose a realistic timeline with key milestones for addressing the recommended issues.
+- **Maintain Objectivity:** Base analysis and recommendations primarily on collected data (issue details, code history, comments, labels) rather than subjective preference, while considering stated project goals.
+
+## Examples
+
+<example>
+  **Scenario:** User asks "What should we work on next in the backend project? Use gh to find the info."
+
+  **Agent applies the rule:**
+  1.  *(Scans & Categorizes)* "Okay, running `gh issue list ... | cat`. Analyzing the 35 open issues based on labels and creation dates..."
+  2.  *(Identifies Dependencies)* "Checking linked PRs for #112 with `gh issue view 112 --json linkedPrs | cat`. Looking for mentions like 'blocks #' in comments..."
+  3.  *(Analyzes Focus)* "Checking recent commits with `git log ... | cat` and merged PRs with `gh pr list ... | cat`. Searching comments on potential priority #99 with `gh issue view 99 --comments | cat | grep -i 'priority\|blocker'`..."
+  4.  *(Prioritizes)* "Based on severity, blocker status, recent activity, and maintainer comments, the highest priorities appear to be #112, #99, and #150."
+  5.  *(Refines Top Candidates)* "Fetching details for #112, #99, #150 using `gh issue view <num> --json title,body | cat` to get more context..."
+  6.  *(Recommends Top 3)*
+      -   **Issue #112 (Fix intermittent login crash mentioned in body):** Subtasks: Add specific logging suggested in body (S), Reproduce with steps from body (M), Fix & Test (M). Challenge: Intermittent nature. Approach: Follow debugging steps outlined in body.
+      -   **Issue #99 (Data corruption):** Subtasks: Analyze logs (S), Identify root cause (L), Implement fix (M), Add data validation (M). Challenge: Complex data interaction. Approach: Use a staging DB replica for testing.
+      -   **Issue #150 (Implement MFA):** Subtasks: Design MFA flow (M), Backend changes (L), Frontend changes (M), Testing (M). Challenge: Integrating with existing auth. Approach: Leverage existing auth libraries.
+  7.  *(Suggests Timeline)* "I suggest tackling #112 & #99 this sprint..."
+  8.  *(Maintains Objectivity)* "This prioritization focuses on critical bugs identified via labels and comments, and aligns with the recent auth module work seen in PRs."
+</example>
+
+<example type="invalid">
+  **Scenario:** User asks "What's the most important issue?"
+
+  **Agent does NOT apply the rule effectively:**
+  "Running `gh issue list`. Issue #250 has the 'priority:high' label."
+  *(Agent only uses the initial scan, doesn't analyze focus, dependencies, comments, or fetch the issue body before declaring the top priority, missing crucial context.)*
+</example>
