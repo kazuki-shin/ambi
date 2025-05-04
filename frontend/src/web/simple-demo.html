@@ -220,7 +220,8 @@
             body: audioBlob,
             headers: {
               'Content-Type': 'application/octet-stream'
-            }
+            },
+            credentials: 'omit'
           });
           
           if (!response.ok) {
