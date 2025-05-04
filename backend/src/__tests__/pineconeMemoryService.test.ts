@@ -132,7 +132,13 @@ describe('Pinecone Memory Service', () => {
     
     const memory = await createPineconeMemory();
     
-    await expect(memory.loadMemoryVariables({ input: 'What is your name?' }))
-      .resolves.toEqual({ relevantHistory: [] });
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    
+    const result = await memory.loadMemoryVariables({ input: 'What is your name?' });
+    
+    expect(consoleSpy).toHaveBeenCalled();
+    expect(result).toEqual({ relevantHistory: [] });
+    
+    consoleSpy.mockRestore();
   });
 });
