@@ -18,30 +18,83 @@ Ambi is an AI-powered conversational companion designed to reduce loneliness and
 - **Additional:** Deepgram (speech recognition), OpenAI Ada (embeddings), Amplitude (analytics), Datadog (monitoring), Sentry (error tracking)
 
 ## Getting Started
-1. **Clone the repository:**
-   ```bash
-   git clone <repo-url>
-   cd ambi
-   ```
-2. **Install dependencies:**
-   ```bash
-   # For Node.js/React Native
-   npm install
-   # For backend (if separate)
-   # cd backend && npm install
-   ```
-3. **Set up environment variables:**
-   - Copy `.env.example` to `.env` and fill in required API keys and configuration values.
-4. **Run the application:**
-   ```bash
-   # For React Native (tablet app)
-   npm run start
-   # For backend (if separate)
-   # npm run dev
-   ```
+
+### Prerequisites
+
+*   **Node.js:** (v18 or v20 recommended, check `.github/workflows/ci.yml` for tested versions)
+*   **npm:** (Comes with Node.js)
+*   **Watchman:** (Recommended for React Native: `brew install watchman`)
+*   **Xcode:** (For iOS development, from Mac App Store)
+*   **CocoaPods:** (For iOS dependencies: `sudo gem install cocoapods` or via Ruby version manager gem install)
+*   **Ruby:** (>= 3.1.0 required for latest CocoaPods, recommend using `rbenv` or `rvm`)
+*   **Android Studio:** (For Android development, including SDKs and emulator)
+
+### Setup
+
+1.  **Clone the repository:**
+    ```bash
+    git clone <your-repo-url> # Replace with actual URL
+    cd ambi
+    ```
+2.  **Set up Backend Environment:**
+    *   Navigate to the backend directory: `cd backend`
+    *   Copy the example environment file: `cp .env.example .env`
+    *   **Edit `backend/.env`**: Fill in *all* required API keys and connection strings (MongoDB, Redis, Anthropic, ElevenLabs, Deepgram). Refer to `backend/.env.example` for variable names.
+3.  **Install Backend Dependencies:**
+    *   While in the `backend` directory:
+        ```bash
+        npm install 
+        ```
+4.  **Set up Frontend Environment:**
+    *   Navigate to the frontend directory: `cd ../frontend` 
+    *   (No frontend `.env` file needed for Phase 1)
+5.  **Install Frontend Dependencies:**
+    *   While in the `frontend` directory:
+        ```bash
+        npm install 
+        ```
+6.  **Install iOS Pods:**
+    *   Navigate to the iOS directory: `cd ios`
+    *   Install pods: `pod install`
+    *   Navigate back: `cd ..`
+
+### Running the Application
+
+*   **Run Backend Server:**
+    *   Open a terminal, navigate to the `backend` directory (`cd backend`).
+    *   Start the development server:
+        ```bash
+        npm run dev
+        ```
+    *   The server will typically run on `http://localhost:4000`.
+
+*   **Run Frontend App (iOS):**
+    *   Ensure the backend server is running.
+    *   Ensure an iOS Simulator is running (launch via Xcode).
+    *   Open a *new* terminal, navigate to the `frontend` directory (`cd frontend`).
+    *   Start the app on the simulator:
+        ```bash
+        npx react-native run-ios
+        ```
+
+*   **Run Frontend App (Android):**
+    *   Ensure the backend server is running.
+    *   Ensure an Android Emulator is running or a device is connected.
+    *   Open a *new* terminal, navigate to the `frontend` directory (`cd frontend`).
+    *   Start the app on the emulator/device:
+        ```bash
+        npx react-native run-android
+        ```
+
+### Running Tests
+
+*   **Backend Tests:**
+    *   Navigate to the `backend` directory (`cd backend`).
+    *   Run tests:
+        ```bash
+        npm test
+        ```
+    *   (Note: Currently passes with no tests found. Add actual tests later.)
 
 ## Documentation
-- See `docs/prd.md` for the full product requirements and feature details.
-
-## License
-[MIT](LICENSE)
+- See `docs/prd.md`
