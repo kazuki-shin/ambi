@@ -84,14 +84,16 @@ describe('POST /api/conversation', () => {
 
   // Cleanup after all tests are done
   afterAll(async () => {
-    // Close MongoDB connection
-    await mongoose.disconnect();
-    console.log('MongoDB disconnected for test.');
-
-    // Close Redis connection
-    if (redisClient) {
-      await redisClient.quit();
-      console.log('Redis disconnected for test.');
+    try {
+      // Close MongoDB connection
+      await mongoose.disconnect();
+      
+      // Close Redis connection if it exists
+      if (redisClient) {
+        await redisClient.quit();
+      }
+    } catch (error) {
+      console.error('Error during test cleanup:', error);
     }
   });
-}); 
+});  
