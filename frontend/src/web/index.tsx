@@ -1,5 +1,5 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import VoiceDemo from './VoiceDemo';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -7,10 +7,10 @@ document.addEventListener('DOMContentLoaded', () => {
   rootElement.id = 'root';
   document.body.appendChild(rootElement);
 
-  ReactDOM.render(
+  const root = createRoot(rootElement);
+  root.render(
     <React.StrictMode>
       <VoiceDemo />
-    </React.StrictMode>,
-    rootElement
+    </React.StrictMode>
   );
 });
