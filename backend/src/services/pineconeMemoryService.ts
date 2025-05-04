@@ -60,45 +60,96 @@ export class PineconeVectorMemory extends BaseMemory {
    */
   async loadMemoryVariables(values: InputValues): Promise<MemoryVariables> {
     const query = values[this.inputKey] as string;
-    
+
     if (!query) {
       return { relevantHistory: [] };
     }
-    
+
     try {
       const queryEmbedding = await generateEmbedding(query);
-      
+
+      // Increase topK to fetch more potential matches (human + AI pairs)
+      const increasedTopK = this.maxResults * 2; // Example: fetch double
+
       const results = await queryVectors(
         queryEmbedding,
-        this.maxResults,
+        increasedTopK,
         this.namespace
       );
-      
+
       if (!results || !results.matches.length) {
+        this.log("No matches found in Pinecone.");
         return { relevantHistory: [] };
       }
-      
-      const relevantMatches = results.matches.filter(
-        match => match.score && match.score >= this.relevanceThreshold
-      );
-      
-      if (!relevantMatches.length) {
-        return { relevantHistory: [] };
+
+      this.log(`Initial Pinecone query returned ${results.matches.length} matches.`);
+
+      // Define a type for matches with metadata and score
+      type MatchWithMetadata = {
+          id: string;
+          score?: number;
+          metadata?: Record<string, unknown>;
       }
-      
-      const messages: BaseMessage[] = relevantMatches.map(match => {
-        const metadata = match.metadata as Record<string, unknown>;
-        const content = match.id.split(':')[1]; // Extract content from ID
-        
-        if (metadata && metadata.role === 'human') {
-          return new HumanMessage(content);
-        } else {
-          return new AIMessage(content);
+
+      // Group matches by session ID
+      const matchesBySession: Record<string, MatchWithMetadata[]> = {};
+      results.matches.forEach(match => {
+        const metadata = match.metadata as Record<string, unknown>; // Assuming metadata exists
+        const sessionId = metadata?.sessionId as string;
+        if (sessionId && match.id) { // Ensure match has id and sessionId
+          if (!matchesBySession[sessionId]) {
+            matchesBySession[sessionId] = [];
+          }
+          matchesBySession[sessionId].push({
+              id: match.id,
+              score: match.score,
+              metadata: metadata 
+          });
         }
       });
+
+      const relevantMessages: BaseMessage[] = [];
+
+      // Process each session separately to find pairs
+      for (const sessionId in matchesBySession) {
+        const sessionMatches = matchesBySession[sessionId];
+        // Sort by timestamp to identify pairs
+        sessionMatches.sort((a, b) => (a.metadata?.timestamp as number) - (b.metadata?.timestamp as number));
+
+        for (let i = 0; i < sessionMatches.length; i++) {
+          const match = sessionMatches[i];
+          const metadata = match.metadata as Record<string, unknown>; 
+          const score = match.score || 0;
+
+          // If we find a relevant human message, look for the subsequent AI message
+          if (metadata?.role === 'human' && score >= this.relevanceThreshold) {
+            const humanContent = metadata?.originalContent as string; // Get content from metadata
+            if (humanContent) { // Check if content exists in metadata
+              relevantMessages.push(new HumanMessage(humanContent));
+            }
+
+            // Look for the next message in the sorted list IF it's an AI message
+            if (i + 1 < sessionMatches.length) {
+              const nextMatch = sessionMatches[i + 1];
+              const nextMetadata = nextMatch.metadata as Record<string, unknown>; 
+              if (nextMetadata?.role === 'ai') {
+                const aiContent = nextMetadata?.originalContent as string; // Get content from metadata
+                if (aiContent) { // Check if content exists in metadata
+                  relevantMessages.push(new AIMessage(aiContent));
+                }
+              }
+            }
+          }
+        }
+      }
       
-      console.log(`[PineconeMemoryService] Retrieved ${messages.length} relevant memories.`);
-      return { relevantHistory: messages };
+      // Deduplicate messages
+      const uniqueMessages = relevantMessages.filter((msg, index, self) =>
+        index === self.findIndex((m) => JSON.stringify(m) === JSON.stringify(msg))
+      );
+
+      this.log(`Retrieved ${uniqueMessages.length} relevant messages after pairing.`);
+      return { relevantHistory: uniqueMessages }; 
     } catch (error) {
       console.error('[PineconeMemoryService] Error loading memory variables:', error);
       return { relevantHistory: [] };
@@ -131,7 +182,7 @@ export class PineconeVectorMemory extends BaseMemory {
       const aiCategory = categorizeMessage(aiContent);
       
       const humanRecord: PineconeRecord = {
-        id: `${sessionId}:${humanContent}`,
+        id: `${sessionId}:human:${uuidv4()}`, // Use UUID instead of content for ID
         values: humanEmbedding,
         metadata: {
           sessionId,
@@ -139,11 +190,12 @@ export class PineconeVectorMemory extends BaseMemory {
           role: 'human',
           category: humanCategory,
           priority: getPriorityLevel(humanContent),
+          originalContent: humanContent, // Store original content in metadata
         },
       };
       
       const aiRecord: PineconeRecord = {
-        id: `${sessionId}:${aiContent}`,
+        id: `${sessionId}:ai:${uuidv4()}`, // Use UUID instead of content for ID
         values: aiEmbedding,
         metadata: {
           sessionId,
@@ -151,6 +203,7 @@ export class PineconeVectorMemory extends BaseMemory {
           role: 'ai',
           category: aiCategory,
           priority: getPriorityLevel(aiContent),
+          originalContent: aiContent, // Store original content in metadata
         },
       };
       
@@ -173,6 +226,11 @@ export class PineconeVectorMemory extends BaseMemory {
     } catch (error) {
       console.error(`[PineconeMemoryService] Error clearing memories:`, error);
     }
+  }
+
+  // Helper log function
+  private log(message: string) {
+    console.log(`[PineconeMemoryService] ${message}`);
   }
 }
 
