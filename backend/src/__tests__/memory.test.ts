@@ -1,5 +1,7 @@
 import { describe, expect, test, beforeEach, jest } from '@jest/globals';
 import { addToMemory, getRecentHistory, getRelevantMemories, buildMemoryContext } from '../services/memoryManager';
+import * as redisMemoryService from '../services/redisMemoryService';
+import * as pineconeMemoryService from '../services/pineconeMemoryService';
 
 jest.mock('../services/redisMemoryService', () => ({
   createRedisMemory: jest.fn(),
@@ -30,12 +32,12 @@ describe('Memory Manager', () => {
       saveContext: jest.fn().mockImplementation(() => Promise.resolve()),
     };
     
-    jest.spyOn(require('../services/pineconeMemoryService'), 'createPineconeMemory')
-      .mockReturnValue(mockPineconeMemory);
+    jest.spyOn(pineconeMemoryService, 'createPineconeMemory')
+      .mockReturnValue(mockPineconeMemory as any);
     
     await addToMemory(sessionId, userMessage, aiMessage);
     
-    const addRedisMessagePairMock = jest.spyOn(require('../services/redisMemoryService'), 'addRedisMessagePair');
+    const addRedisMessagePairMock = jest.spyOn(redisMemoryService, 'addRedisMessagePair');
     expect(addRedisMessagePairMock).toHaveBeenCalledWith(sessionId, userMessage, aiMessage);
     
     expect(mockPineconeMemory.saveContext).toHaveBeenCalledWith(
@@ -50,8 +52,8 @@ describe('Memory Manager', () => {
       { content: aiMessage, type: 'ai' },
     ];
     
-    const getRedisHistoryMock = jest.spyOn(require('../services/redisMemoryService'), 'getRedisHistory')
-      .mockImplementation(() => Promise.resolve(mockHistory));
+    const getRedisHistoryMock = jest.spyOn(redisMemoryService, 'getRedisHistory')
+      .mockImplementation(() => Promise.resolve(mockHistory as any));
     
     const result = await getRecentHistory(sessionId);
     
@@ -71,8 +73,8 @@ describe('Memory Manager', () => {
       })),
     };
     
-    jest.spyOn(require('../services/pineconeMemoryService'), 'createPineconeMemory')
-      .mockReturnValue(mockPineconeMemory);
+    jest.spyOn(pineconeMemoryService, 'createPineconeMemory')
+      .mockReturnValue(mockPineconeMemory as any);
     
     const result = await getRelevantMemories(sessionId, userMessage);
     
@@ -92,8 +94,8 @@ describe('Memory Manager', () => {
       { content: 'Relevant response', type: 'ai' },
     ];
     
-    const getRedisHistoryMock = jest.spyOn(require('../services/redisMemoryService'), 'getRedisHistory')
-      .mockImplementation(() => Promise.resolve(mockRecentHistory));
+    const getRedisHistoryMock = jest.spyOn(redisMemoryService, 'getRedisHistory')
+      .mockImplementation(() => Promise.resolve(mockRecentHistory as any));
     
     const mockPineconeMemory = {
       loadMemoryVariables: jest.fn().mockImplementation(() => Promise.resolve({
@@ -101,8 +103,8 @@ describe('Memory Manager', () => {
       })),
     };
     
-    jest.spyOn(require('../services/pineconeMemoryService'), 'createPineconeMemory')
-      .mockReturnValue(mockPineconeMemory);
+    jest.spyOn(pineconeMemoryService, 'createPineconeMemory')
+      .mockReturnValue(mockPineconeMemory as any);
     
     const result = await buildMemoryContext(sessionId, userMessage);
     
@@ -119,16 +121,16 @@ describe('Memory Manager', () => {
       loadMemoryVariables: jest.fn().mockImplementation(() => Promise.reject(new Error('Test error'))),
     };
     
-    jest.spyOn(require('../services/pineconeMemoryService'), 'createPineconeMemory')
-      .mockReturnValue(mockPineconeMemory);
+    jest.spyOn(pineconeMemoryService, 'createPineconeMemory')
+      .mockReturnValue(mockPineconeMemory as any);
     
     const mockRecentHistory = [
       { content: 'Recent message', type: 'human' },
       { content: 'Recent response', type: 'ai' },
     ];
     
-    const getRedisHistoryMock = jest.spyOn(require('../services/redisMemoryService'), 'getRedisHistory')
-      .mockImplementation(() => Promise.resolve(mockRecentHistory));
+    const getRedisHistoryMock = jest.spyOn(redisMemoryService, 'getRedisHistory')
+      .mockImplementation(() => Promise.resolve(mockRecentHistory as any));
     
     const result = await buildMemoryContext(sessionId, userMessage);
     
