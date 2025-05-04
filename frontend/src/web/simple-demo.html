@@ -211,9 +211,12 @@
           setStatus('THINKING');
           recordButton.disabled = true;
           
-          const url = sessionId 
-            ? `/api/voice-conversation?sessionId=${sessionId}`
-            : '/api/voice-conversation';
+          // Use window.location.origin to create a clean URL without credentials
+          const apiUrl = new URL('/api/voice-conversation', window.location.origin);
+          if (sessionId) {
+            apiUrl.searchParams.append('sessionId', sessionId);
+          }
+          const url = apiUrl.toString();
           
           const response = await fetch(url, {
             method: 'POST',
