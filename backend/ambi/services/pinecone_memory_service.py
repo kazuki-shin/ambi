@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class PineconeMemoryService:
     """
     Pinecone-based memory service for long-term semantic memory.
-    
+
     This service uses Pinecone vector database to store and retrieve
     memories based on semantic similarity.
     """
@@ -34,12 +34,12 @@ class PineconeMemoryService:
     ) -> bool:
         """
         Add a memory entry to the long-term memory.
-        
+
         Args:
             session_id: Unique identifier for the conversation session
             text: Text content to store
             metadata: Optional metadata for the memory entry
-            
+
         Returns:
             Success status of the operation
         """
@@ -54,16 +54,16 @@ class PineconeMemoryService:
         try:
             if metadata is None:
                 metadata = {}
-            
+
             metadata["session_id"] = session_id
-            
+
             memory_id = f"{session_id}:{uuid.uuid4()}"
-            
+
             embedding = await self._get_embedding(text)
             if not embedding:
                 logger.error("Failed to generate embedding for text")
                 return False
-            
+
             self.pinecone.upsert(
                 vectors=[
                     {
@@ -76,9 +76,9 @@ class PineconeMemoryService:
                     }
                 ]
             )
-            
+
             return True
-            
+
         except Exception as e:
             logger.error(f"Error adding memory to Pinecone: {str(e)}")
             return False
@@ -91,12 +91,12 @@ class PineconeMemoryService:
     ) -> List[Dict]:
         """
         Search for relevant memories based on semantic similarity.
-        
+
         Args:
             session_id: Unique identifier for the conversation session
             query: Search query text
             limit: Maximum number of results to retrieve
-            
+
         Returns:
             List of relevant memory entries
         """
@@ -113,25 +113,27 @@ class PineconeMemoryService:
             if not embedding:
                 logger.error("Failed to generate embedding for query")
                 return []
-            
+
             search_response = self.pinecone.query(
                 vector=embedding,
                 filter={"session_id": session_id},
                 top_k=limit,
                 include_metadata=True,
             )
-            
+
             results = []
             for match in search_response.get("matches", []):
                 metadata = match.get("metadata", {})
-                results.append({
-                    "text": metadata.get("text", ""),
-                    "score": match.get("score", 0.0),
-                    "metadata": {k: v for k, v in metadata.items() if k != "text"},
-                })
-            
+                results.append(
+                    {
+                        "text": metadata.get("text", ""),
+                        "score": match.get("score", 0.0),
+                        "metadata": {k: v for k, v in metadata.items() if k != "text"},
+                    }
+                )
+
             return results
-            
+
         except Exception as e:
             logger.error(f"Error searching memories in Pinecone: {str(e)}")
             return []
@@ -139,10 +141,10 @@ class PineconeMemoryService:
     async def clear_session(self, session_id: str) -> bool:
         """
         Clear all memories for a specific session.
-        
+
         Args:
             session_id: Unique identifier for the conversation session
-            
+
         Returns:
             Success status of the operation
         """
@@ -158,9 +160,9 @@ class PineconeMemoryService:
             self.pinecone.delete(
                 filter={"session_id": session_id},
             )
-            
+
             return True
-            
+
         except Exception as e:
             logger.error(f"Error clearing session from Pinecone: {str(e)}")
             return False
@@ -168,17 +170,17 @@ class PineconeMemoryService:
     async def _get_embedding(self, text: str) -> Optional[List[float]]:
         """
         Generate embedding for text using the configured embedding model.
-        
+
         Args:
             text: Text to generate embedding for
-            
+
         Returns:
             Embedding vector as a list of floats
         """
         try:
             embedding = self.embeddings.embed_query(text)
             return embedding
-            
+
         except Exception as e:
             logger.error(f"Error generating embedding: {str(e)}")
             return None

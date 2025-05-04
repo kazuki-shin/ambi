@@ -8,8 +8,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from ambi.config.settings import API_PREFIX, DEBUG
 from ambi.db.mongodb import mongodb
-from ambi.db.redis import redis_connection
 from ambi.db.pinecone import pinecone_connection
+from ambi.db.redis import redis_connection
 
 logger = logging.getLogger(__name__)
 

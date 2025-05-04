@@ -19,11 +19,11 @@ class VoiceService:
     ) -> Dict[str, Union[str, bool]]:
         """
         Convert speech to text using Deepgram.
-        
+
         Args:
             audio_data: Audio data as bytes or file path
             language: Language code (default: 'en')
-            
+
         Returns:
             Dictionary with transcript and success status
         """
@@ -33,19 +33,19 @@ class VoiceService:
                 language=language,
                 smart_format=True,
             )
-            
+
             if not result:
                 logger.error("Failed to transcribe audio")
                 return {"success": False, "transcript": ""}
-            
+
             transcript = deepgram_client.extract_transcript(result)
-            
+
             if not transcript:
                 logger.warning("Empty transcript from speech recognition")
                 return {"success": False, "transcript": ""}
-            
+
             return {"success": True, "transcript": transcript}
-            
+
         except Exception as e:
             logger.error(f"Error in speech-to-text conversion: {str(e)}")
             return {"success": False, "transcript": "", "error": str(e)}
@@ -57,11 +57,11 @@ class VoiceService:
     ) -> Dict[str, Union[bytes, bool]]:
         """
         Convert text to speech using ElevenLabs.
-        
+
         Args:
             text: Text to convert to speech
             voice_id: Optional voice ID to use
-            
+
         Returns:
             Dictionary with audio data and success status
         """
@@ -70,13 +70,13 @@ class VoiceService:
                 text=text,
                 voice_id=voice_id,
             )
-            
+
             if not audio_data:
                 logger.error("Failed to generate speech")
                 return {"success": False, "audio": b""}
-            
+
             return {"success": True, "audio": audio_data}
-            
+
         except Exception as e:
             logger.error(f"Error in text-to-speech conversion: {str(e)}")
             return {"success": False, "audio": b"", "error": str(e)}

@@ -36,14 +36,14 @@ class DeepgramSpeechClient:
     ) -> Optional[Dict]:
         """
         Transcribe audio data to text using Deepgram API.
-        
+
         Args:
             audio_data: Audio data as bytes or file path as string
             language: Language code (default: 'en')
             model: Deepgram model to use (default: 'nova-2')
             smart_format: Whether to apply smart formatting (default: True)
             diarize: Whether to diarize the audio (default: False)
-            
+
         Returns:
             Transcription result as dictionary or None if an error occurs
         """
@@ -58,7 +58,7 @@ class DeepgramSpeechClient:
                 smart_format=smart_format,
                 diarize=diarize,
             )
-            
+
             if isinstance(audio_data, bytes):
                 response = await self.client.listen.prerecorded.transcribe_buffer(
                     buffer=audio_data,
@@ -73,9 +73,9 @@ class DeepgramSpeechClient:
             else:
                 logger.error("Invalid audio data type")
                 return None
-            
+
             return response.results
-            
+
         except Exception as e:
             logger.error(f"Error transcribing audio with Deepgram: {str(e)}")
             return None
@@ -83,27 +83,27 @@ class DeepgramSpeechClient:
     def extract_transcript(self, result: Dict) -> str:
         """
         Extract transcript text from Deepgram response.
-        
+
         Args:
             result: Deepgram transcription result
-            
+
         Returns:
             Extracted transcript text
         """
         try:
             if not result or "channels" not in result:
                 return ""
-            
+
             channel = result["channels"][0]
             if "alternatives" not in channel or not channel["alternatives"]:
                 return ""
-            
+
             alternative = channel["alternatives"][0]
             if "transcript" not in alternative:
                 return ""
-            
+
             return alternative["transcript"]
-            
+
         except Exception as e:
             logger.error(f"Error extracting transcript from Deepgram result: {str(e)}")
             return ""

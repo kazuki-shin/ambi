@@ -27,7 +27,7 @@ class RedisConnection:
         """Connect to Redis using the configured settings."""
         try:
             logger.info("Connecting to Redis...")
-            
+
             if REDIS_URL:
                 cls.client = redis.from_url(REDIS_URL)
             else:
@@ -38,7 +38,7 @@ class RedisConnection:
                     password=REDIS_PASS,
                     decode_responses=True,
                 )
-            
+
             await cls.client.ping()
             logger.info("Connected to Redis")
         except Exception as e:
