@@ -150,7 +150,7 @@ export const queryVectors = async (
     const queryResponse = await index.namespace(namespace).query({
       vector,
       topK,
-      filter,
+      filter: filter ?? {},
       includeMetadata: true,
     });
     

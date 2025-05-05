@@ -1,5 +1,6 @@
 import { OpenAIEmbeddings } from '@langchain/openai';
 import { longTermMemoryConfig } from '../config/memoryConfig';
+import tracer from '../tracer'; // Import Datadog tracer
 
 /**
  * Service for generating embeddings for text using OpenAI's embedding models.
@@ -86,14 +87,44 @@ export const generateEmbeddings = async (texts: string[]): Promise<number[][]> =
   }
   
   const embeddings = embeddingsModel || initializeEmbeddings();
-  
+  const modelName = longTermMemoryConfig.embeddingModel;
+
+  const parentSpan = tracer.scope().active();
+  const span = parentSpan ? tracer.startSpan('openai.embeddings', { childOf: parentSpan }) : tracer.startSpan('openai.embeddings');
+
+  span.setTag('span.kind', 'client');
+  span.setTag('llm', true);
+  span.setTag('llm.request.type', 'embedding');
+  span.setTag('llm.request.model', modelName);
+  // Tagging multiple inputs can be large; consider summarizing or tagging only the count
+  span.setTag('llm.input_count', texts.length);
+  // Optionally tag a sample or summarized version of inputs if needed and feasible
+  // span.setTag('llm.input_sample', JSON.stringify(texts.slice(0, 1))); 
+
   try {
     console.log(`Generating embeddings for ${texts.length} texts...`);
     const vectors = await embeddings.embedDocuments(texts);
     console.log(`Generated ${vectors.length} embeddings.`);
+
+    // Add response tags (token usage often not directly available from LangChain wrappers)
+    span.setTag('llm.response.vector_count', vectors.length);
+    span.setTag('llm.response.model', modelName); // Assuming request model is response model for embeddings
+
+    span.finish();
     return vectors;
   } catch (error) {
     console.error('Error generating embeddings:', error);
+    if (error instanceof Error) {
+      span.setTag('error.message', error.message);
+      span.setTag('error.stack', error.stack);
+      span.setTag('error.type', error.name);
+    } else {
+      span.setTag('error.message', String(error));
+    }
+    span.setTag('error', true);
+    span.finish();
+    // Re-throwing or using mock might hide the error trace, consider returning error/empty
+    // Using mock as per original code:
     const mockEmbeddings = createMockEmbeddings();
     return mockEmbeddings.embedDocuments(texts);
   }
@@ -106,13 +137,40 @@ export const generateEmbeddings = async (texts: string[]): Promise<number[][]> =
  */
 export const generateEmbedding = async (text: string): Promise<number[]> => {
   const embeddings = embeddingsModel || initializeEmbeddings();
-  
+  const modelName = longTermMemoryConfig.embeddingModel;
+
+  const parentSpan = tracer.scope().active();
+  const span = parentSpan ? tracer.startSpan('openai.embedding', { childOf: parentSpan }) : tracer.startSpan('openai.embedding'); // Note: singular name
+
+  span.setTag('span.kind', 'client');
+  span.setTag('llm', true);
+  span.setTag('llm.request.type', 'embedding');
+  span.setTag('llm.request.model', modelName);
+  span.setTag('llm.input', text); // Tag the single input text
+
   try {
     console.log('Generating embedding for query text...');
     const vector = await embeddings.embedQuery(text);
+
+    // Add response tags (token usage often not directly available from LangChain wrappers)
+    span.setTag('llm.response.vector_dimension', vector.length);
+    span.setTag('llm.response.model', modelName); // Assuming request model is response model for embeddings
+
+    span.finish();
     return vector;
   } catch (error) {
     console.error('Error generating embedding:', error);
+    if (error instanceof Error) {
+      span.setTag('error.message', error.message);
+      span.setTag('error.stack', error.stack);
+      span.setTag('error.type', error.name);
+    } else {
+      span.setTag('error.message', String(error));
+    }
+    span.setTag('error', true);
+    span.finish();
+    // Re-throwing or using mock might hide the error trace, consider returning error/empty
+    // Using mock as per original code:
     const mockEmbeddings = createMockEmbeddings();
     return mockEmbeddings.embedQuery(text);
   }
