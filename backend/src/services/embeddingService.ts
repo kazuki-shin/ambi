@@ -87,7 +87,7 @@ export const generateEmbeddings = async (texts: string[]): Promise<number[][]> =
   }
   
   const embeddings = embeddingsModel || initializeEmbeddings();
-  const modelName = (embeddings as any)?.modelName || longTermMemoryConfig.embeddingModel; // Get model name
+  const modelName = longTermMemoryConfig.embeddingModel;
 
   const parentSpan = tracer.scope().active();
   const span = parentSpan ? tracer.startSpan('openai.embeddings', { childOf: parentSpan }) : tracer.startSpan('openai.embeddings');
@@ -137,7 +137,7 @@ export const generateEmbeddings = async (texts: string[]): Promise<number[][]> =
  */
 export const generateEmbedding = async (text: string): Promise<number[]> => {
   const embeddings = embeddingsModel || initializeEmbeddings();
-  const modelName = (embeddings as any)?.modelName || longTermMemoryConfig.embeddingModel; // Get model name
+  const modelName = longTermMemoryConfig.embeddingModel;
 
   const parentSpan = tracer.scope().active();
   const span = parentSpan ? tracer.startSpan('openai.embedding', { childOf: parentSpan }) : tracer.startSpan('openai.embedding'); // Note: singular name
