@@ -1,0 +1,24 @@
+{
+  "name": "ambi-monorepo",
+  "version": "0.1.0",
+  "description": "Monorepo for Ambi - Emotionally Intelligent Companion Robot for the Elderly",
+  "private": true,
+  "scripts": {
+    "lint": "eslint . --ext .ts,.tsx",
+    "format": "prettier --write ."
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^7.10.0",
+    "@typescript-eslint/parser": "^7.10.0",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-react": "^7.34.2",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "prettier": "^3.3.0",
+    "typescript": "^5.4.5"
+  }
+} 
