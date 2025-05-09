@@ -52,7 +52,7 @@ To create an emotionally intelligent companion that reduces loneliness in elderl
 
 #### 2. Emotion Detection System
 - Camera-based facial expression analysis
-- Basic emotional state recognition (happy, sad, neutral, confused)
+- Basic emotional state recognition (happy, sad, neutral, confused) - POC Target: Correctly identify the user's dominant expressed emotion in >60% of instances where expressions are clear and sustained, based on qualitative testing.
 - Emotion-aware response adaptation
 - Privacy-preserving processing (edge computing where possible)
 
@@ -60,7 +60,7 @@ To create an emotionally intelligent companion that reduces loneliness in elderl
 - Time-based engagement triggers (morning greetings, evening check-ins)
 - Emotional state triggers (engaging when user appears lonely)
 - Context-aware conversation starters
-- Natural disengagement when appropriate
+- Natural disengagement when appropriate - POC Approach: Disengagement will be triggered by simpler cues such as extended user silence, explicit user statements ending the conversation (e.g., "goodbye"), or a predefined short inactivity timeout. More nuanced, context-driven natural disengagement is a goal for future iterations.
 
 #### 4. Custom Context Injection
 - Dynamic system prompt generation for ElevenLabs
@@ -143,7 +143,7 @@ To ensure a clean, well-designed, and accessible user interface is developed eff
   - MediaPipe integration for face detection
   - Lightweight emotion classification
   - Privacy-preserving processing
-  - Scene understanding for context
+  - Scene understanding for context - POC Scope: Basic environmental cues (e.g., distinguishing very low light suggesting nighttime from brighter conditions, or presence of a face in frame vs. not) rather than complex object recognition or detailed scene analysis.
 
 ##### Custom Context Service
 - **Technology**: Node.js
@@ -396,7 +396,7 @@ This section outlines the specific considerations for deploying Ambi for field t
 ### Development Costs
 - ElevenLabs API: $150-$300/month (development tier)
 - Fly.io hosting: $100-$200/month (POC infrastructure)
-- Development team: Not included (internal resources)
+- Development team: Internal resources (personnel/salary costs are not included in these operational cost projections).
 
 ### POC User Costs
 - 50 test users: ~$500-$1000/month for ElevenLabs usage
@@ -414,7 +414,7 @@ This section outlines the specific considerations for deploying Ambi for field t
   - **Mitigation**: Edge deployment, optimize audio processing, fallback mechanisms
 
 - **Risk**: Emotion detection accuracy limitations
-  - **Mitigation**: Conservative classification, confidence thresholds, multi-modal signals
+  - **Mitigation**: Conservative classification, confidence thresholds, multi-modal signals, qualitative POC target.
 
 - **Risk**: Elderly adoption challenges
   - **Mitigation**: Simplified UX, caregiver onboarding assistance, robust help system
@@ -428,6 +428,13 @@ This section outlines the specific considerations for deploying Ambi for field t
 
 - **Risk**: Regulatory concerns regarding elder care
   - **Mitigation**: Clear product positioning as companion not medical device, compliance review
+
+### Resource and Timeline Risks
+- **Risk**: Dependency on a small internal team; illness or departure of a key member could significantly impact the timeline.
+  - **Mitigation**: Prioritize comprehensive documentation, encourage knowledge sharing across the team, and design modular components to reduce single-person dependencies.
+
+- **Risk**: The ambitious 12-week timeline for the POC may be challenged by unforeseen technical hurdles, integration complexities, or scope creep.
+  - **Mitigation**: Implement agile development practices with frequent progress reviews and scope reassessment, maintain a strict focus on core MVP features, and clearly define "done" for each task and phase.
 
 ## 17. Success Criteria for POC
 
