@@ -5,7 +5,7 @@ interface AppError extends Error {
   isOperational?: boolean;
 }
 
-const errorHandler = (err: AppError, req: Request, res: Response, next: NextFunction) => {
+const errorHandler = (err: AppError, req: Request, res: Response, _next: NextFunction) => {
   console.error('ERROR 💥', err);
 
   const statusCode = err.statusCode || 500;
