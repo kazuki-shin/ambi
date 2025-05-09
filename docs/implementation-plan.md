@@ -25,11 +25,11 @@ The new Ambi approach focuses on creating a web-based proof of concept that leve
 - [x] Implement basic error handling
 
 #### 1.3 Frontend Foundation
-- [ ] Set up React application with TypeScript
-- [ ] Configure routing and state management
-- [ ] Create basic UI components library
-- [ ] Implement responsive layout for desktop and tablet
-- [ ] Set up accessibility standards and testing
+- [x] Set up React application with TypeScript
+- [x] Configure routing and state management
+- [x] Create basic UI components library
+- [x] Implement responsive layout for desktop and tablet
+- [x] Set up accessibility standards and testing
 
 ### Week 2: Core Services Integration
 
