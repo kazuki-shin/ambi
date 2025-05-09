@@ -1,6 +1,6 @@
 # Environment Variables
 
-This document provides a comprehensive list of environment variables used in the Ambi system. These variables control various aspects of the system's behavior and connections to external services.
+This document provides a comprehensive list of environment variables used in the Ambi web-based proof of concept (POC). These variables control various aspects of the system's behavior and connections to external services.
 
 ## Core Environment Variables
 
@@ -8,7 +8,6 @@ This document provides a comprehensive list of environment variables used in the
 |----------|-------------|---------|----------|
 | `NODE_ENV` | Environment mode (`development`, `production`, or `test`) | `development` | Yes |
 | `PORT` | Port number for the backend server | `4000` | Yes |
-| `INTERACTION_MODE` | Primary interaction mode (`voice` or `text`) | `voice` | Yes |
 
 ## Database Connection Variables
 
@@ -16,64 +15,37 @@ This document provides a comprehensive list of environment variables used in the
 
 | Variable | Description | Required |
 |----------|-------------|----------|
-| `MONGODB_URI` | Connection string for MongoDB Atlas | Yes |
-
-### Redis
-
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `REDIS_URL` | Connection URL for Redis | Yes |
-| `REDIS_HOST` | Redis host (alternative to URL) | No |
-| `REDIS_PORT` | Redis port (alternative to URL) | No |
-| `REDIS_USER` | Redis username (alternative to URL) | No |
-| `REDIS_PASS` | Redis password (alternative to URL) | No |
-
-### Pinecone
-
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `PINECONE_API_KEY` | API key for Pinecone | Yes |
-| `PINECONE_INDEX_NAME` | Name of the Pinecone index | Yes |
+| `MONGODB_URI` | Connection string for MongoDB | Yes |
 
 ## External API Variables
 
-### Anthropic Claude
+### ElevenLabs Conversational AI
 
 | Variable | Description | Required |
 |----------|-------------|----------|
-| `ANTHROPIC_API_KEY` | API key for Anthropic Claude | Yes |
-| `CLAUDE_MODEL` | Claude model to use | No |
-| `MAX_TOKENS` | Maximum tokens for Claude responses | No |
+| `ELEVENLABS_API_KEY` | API key for ElevenLabs | Yes |
+| `ELEVENLABS_VOICE_ID` | Voice ID for speech synthesis | No |
 
-### ElevenLabs
-
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `ELEVENLABS_API_KEY` | API key for ElevenLabs | Yes* |
-| `DEFAULT_VOICE_ID` | Default voice ID for speech synthesis | No |
-
-### Deepgram
+### Emotion Analysis API
 
 | Variable | Description | Required |
 |----------|-------------|----------|
-| `DEEPGRAM_API_KEY` | API key for Deepgram | Yes* |
+| `EMOTION_API_KEY` | API key for emotion analysis service | No |
+| `EMOTION_API_URL` | URL for emotion analysis service | No |
 
-### OpenAI
-
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `OPENAI_API_KEY` | API key for OpenAI (used for embeddings) | Yes |
-
-\* Required if `INTERACTION_MODE` is set to `voice`
-
-## Memory System Variables
+## Web Application Variables
 
 | Variable | Description | Default | Required |
 |----------|-------------|---------|----------|
-| `MAX_HISTORY_LENGTH` | Maximum number of messages in short-term memory | `10` | No |
-| `MEMORY_TTL` | Time-to-live for memory entries in seconds | `86400` (24 hours) | No |
-| `RELEVANCE_THRESHOLD` | Minimum similarity score for relevant memories | `0.7` | No |
-| `MAX_RESULTS` | Maximum number of results to retrieve from long-term memory | `5` | No |
+| `REACT_APP_API_URL` | URL for the backend API | `http://localhost:4000` | No |
+| `REACT_APP_WS_URL` | WebSocket URL for real-time communication | `ws://localhost:4000` | No |
+
+## Deployment Variables
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `FLY_API_TOKEN` | API token for Fly.io deployment | No |
+| `FLY_APP_NAME` | Application name on Fly.io | No |
 
 ## Example .env File
 

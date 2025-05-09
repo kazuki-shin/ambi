@@ -1,6 +1,6 @@
 # Developer Onboarding Guide
 
-This guide will help you get started with developing for the Ambi conversational companion system.
+This guide will help you get started with developing for the Ambi web-based conversational companion proof of concept (POC).
 
 ## Prerequisites
 
@@ -9,7 +9,6 @@ Before you begin, ensure you have the following installed:
 - Node.js (v16 or later)
 - npm (v7 or later)
 - MongoDB (local or Atlas account)
-- Redis (local or cloud instance)
 - Git
 
 ## Getting the Code
@@ -44,29 +43,15 @@ Before you begin, ensure you have the following installed:
    # Core
    NODE_ENV=development
    PORT=4000
-   INTERACTION_MODE=voice
    
    # MongoDB
    MONGODB_URI=mongodb://localhost:27017/ambi
    
-   # Redis
-   REDIS_URL=redis://localhost:6379
-   
-   # Pinecone
-   PINECONE_API_KEY=your-pinecone-api-key
-   PINECONE_INDEX_NAME=ambi-memory
-   
-   # Anthropic Claude
-   ANTHROPIC_API_KEY=your-anthropic-api-key
-   
-   # ElevenLabs (for voice mode)
+   # ElevenLabs Conversational AI
    ELEVENLABS_API_KEY=your-elevenlabs-api-key
    
-   # Deepgram (for voice mode)
-   DEEPGRAM_API_KEY=your-deepgram-api-key
-   
-   # OpenAI (for embeddings)
-   OPENAI_API_KEY=your-openai-api-key
+   # Emotion Analysis API (if applicable)
+   EMOTION_API_KEY=your-emotion-api-key
    ```
 
 ## Running the Application
@@ -89,17 +74,7 @@ Before you begin, ensure you have the following installed:
    npm start
    ```
 
-   For React Native development, you'll need to follow the platform-specific instructions:
-   
-   - iOS:
-     ```bash
-     npx react-native run-ios
-     ```
-   
-   - Android:
-     ```bash
-     npx react-native run-android
-     ```
+   The web application will be available at http://localhost:3000 by default.
 
 ## Project Structure
 

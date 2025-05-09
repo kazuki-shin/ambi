@@ -1,21 +1,22 @@
 # Ambi
 
 ## Overview
-Ambi is an AI-powered conversational companion designed to reduce loneliness and enhance the quality of life for elderly individuals. It provides proactive, emotionally intelligent conversation, memory support, and family context integration through a tablet-based application.
+Ambi is an emotionally intelligent conversational companion designed to reduce loneliness and enhance the quality of life for elderly individuals. It provides natural, responsive conversations with minimal latency, proactive engagement tailored to users' emotional states, and a simple, accessible interface through a web-based proof of concept (POC).
 
 ## Key Features
-- **Proactive Conversation:** Initiates and maintains natural, engaging conversations tailored to the user's needs and preferences.
-- **Memory & Context System:** Remembers important details, events, and family-provided context for personalized interactions.
-- **Voice & Speech:** Natural, elder-optimized voice synthesis and accurate speech recognition.
-- **Visual Companion:** Gentle, accessible 3D visualizations and memory timelines.
-- **Accessibility:** Designed for zero learning curve, with high-contrast visuals and support for hearing, vision, and motor limitations.
-- **Privacy & Security:** End-to-end encryption, secure storage, and clear consent processes.
+- **Natural Conversation:** Engages in fluid, natural conversations with minimal latency and high comprehension of elderly speech patterns.
+- **Emotion Detection:** Recognizes and responds appropriately to the emotional state of the user through voice and text analysis.
+- **Proactive Engagement:** Initiates conversations based on user emotional states, time of day, and personalized topics of interest.
+- **Simple Interface:** Provides an intuitive, accessible interface designed specifically for elderly users with varying technical abilities.
+- **Web Accessibility:** Ensures compatibility with various devices and assistive technologies through web standards compliance.
+- **Privacy & Security:** Implements robust data protection with clear consent processes and transparent data usage.
 
 ## Technology Stack
-- **AI & Orchestration:** Claude API (Anthropic), LangChain, Pinecone, ElevenLabs
-- **Frontend:** React Native, React Native Paper, Redux Toolkit, Three.js, TensorFlow Lite, SQLite
-- **Backend:** AWS Serverless, MongoDB Atlas, Pinecone, Redis, Auth0, AWS S3
-- **Additional:** Deepgram (speech recognition), OpenAI Ada (embeddings), Amplitude (analytics), Datadog (monitoring), Sentry (error tracking)
+- **Core AI:** ElevenLabs Conversational AI
+- **Frontend:** React, TypeScript, Tailwind CSS, Web Speech API
+- **Backend:** Express.js, MongoDB, WebSockets
+- **Deployment:** Fly.io
+- **Additional:** ElevenLabs Voice Synthesis, Web Audio API, Emotion Analysis API
 
 ## Getting Started
 

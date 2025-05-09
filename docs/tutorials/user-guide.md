@@ -1,23 +1,24 @@
 # Ambi User Guide
 
-Welcome to Ambi, your AI conversational companion. This guide will help you get started with using Ambi and make the most of its features.
+Welcome to Ambi, your web-based conversational companion. This guide will help you get started with using Ambi and make the most of its features.
 
 ## Getting Started
 
-### Setting Up Ambi
+### Accessing Ambi
 
-1. **Power on your tablet**: Press and hold the power button until the screen lights up.
-2. **Launch the Ambi app**: Tap the Ambi icon on your home screen.
+1. **Open your web browser**: Use any modern web browser like Chrome, Firefox, Safari, or Edge.
+2. **Navigate to Ambi**: Enter the Ambi web address in your browser's address bar.
 3. **Initial setup**: Follow the on-screen instructions to complete the initial setup.
    - You may be asked to grant permissions for microphone access
    - You can adjust the volume to your preference
-   - You can customize the voice and appearance settings
+   - You can customize the voice settings
 
 ### Your First Conversation
 
-1. **Wake up Ambi**: Tap the screen or say "Hello Ambi" to start a conversation.
-2. **Start talking**: Speak naturally to Ambi as you would to a friend.
-3. **Listen to responses**: Ambi will respond to you with both voice and text on the screen.
+1. **Start Ambi**: Click the "Start Conversation" button on the home screen.
+2. **Choose your interaction mode**: Select either voice or text mode.
+3. **Begin interacting**: Speak naturally or type your message.
+4. **Listen to responses**: Ambi will respond to you with both voice and text on the screen.
 
 ## Conversation Features
 
@@ -25,16 +26,16 @@ Welcome to Ambi, your AI conversational companion. This guide will help you get 
 
 If you prefer typing instead of speaking:
 
-1. Tap the keyboard icon at the bottom of the screen.
+1. Click the keyboard icon at the bottom of the screen.
 2. Type your message in the text box.
-3. Tap the send button or press Enter to send your message.
-4. Ambi will respond with text (and optionally voice).
+3. Click the send button or press Enter to send your message.
+4. Ambi will respond with text and voice.
 
 ### Voice Conversation
 
 For hands-free interaction:
 
-1. Ensure the microphone icon is active (blue).
+1. Click the microphone icon to activate voice mode.
 2. Speak clearly at a comfortable pace.
 3. Ambi will automatically detect when you've finished speaking.
 4. Listen to Ambi's response.
@@ -48,21 +49,16 @@ Ambi can talk about a wide range of topics, including:
 - Health and wellness
 - Family and relationships
 - Entertainment and culture
-- Memories from past conversations
+- Daily activities and routines
 
-### Memory Features
+### Emotional Intelligence
 
-Ambi remembers important details from your conversations:
+Ambi can recognize and respond to your emotional state:
 
-- **Personal preferences**: Ambi will remember your likes and dislikes.
-- **Important dates**: Birthdays, anniversaries, and other significant events.
-- **Past conversations**: Ambi can recall topics you've discussed before.
-- **Family information**: Details about your family that you've shared.
-
-To reference a past conversation:
-1. Simply mention the topic you discussed previously.
-2. Ask Ambi if it remembers a specific conversation.
-3. Ambi will recall relevant details and continue the conversation naturally.
+- **Emotion recognition**: Ambi detects emotions through your voice tone and word choice.
+- **Adaptive responses**: Responses are tailored to your current emotional state.
+- **Supportive conversations**: Provides empathetic and supportive interaction when needed.
+- **Mood-appropriate topics**: Suggests topics based on your emotional state.
 
 ## Accessibility Features
 
