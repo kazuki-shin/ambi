@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config(); // Load environment variables from .env file
+
 import express, { Request, Response, Application } from 'express';
 
 const app: Application = express();
