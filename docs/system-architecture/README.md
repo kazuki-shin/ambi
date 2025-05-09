@@ -1,83 +1,82 @@
 # Ambi System Architecture
 
-This document provides a comprehensive overview of the Ambi system architecture, explaining how the various components interact to create a seamless conversational experience.
+This document provides an overview of the Ambi web-based proof of concept (POC) system architecture, explaining how the various components interact to create a seamless conversational experience.
 
 ## High-Level Architecture
 
-Ambi follows a client-server architecture with several integrated services:
+Ambi follows a web-based client-server architecture with integrated services:
 
 ```mermaid
 graph TB
     subgraph Frontend
         direction TB
-        RNApp[React Native App]
+        WebApp[React Web App]
         UI[UI Components]
         StateMgmt[State Management]
         APIClient[API Client]
-        ThreeJS[Visual Companion]
+        WebSpeech[Web Speech API]
+        WebAudio[Web Audio API]
     end
 
     subgraph Backend
         direction TB
-        NodeAPI[Express API Server]
-        MemoryManager[Memory Manager]
-        ClaudeClient[Claude API Client]
-        VoiceService[Voice Service]
+        ExpressAPI[Express API Server]
+        ConversationManager[Conversation Manager]
+        ElevenLabsClient[ElevenLabs Client]
+        EmotionService[Emotion Detection Service]
+        ProactiveEngine[Proactive Engagement Engine]
         
-        subgraph Databases
+        subgraph Database
             MongoDB[(MongoDB)]
-            Redis[(Redis)]
-            Pinecone[(Pinecone)]
         end
     end
 
     subgraph External Services
         direction TB
-        ClaudeAPI[Anthropic Claude API]
-        ElevenLabsAPI[ElevenLabs API]
-        DeepgramAPI[Deepgram API]
+        ElevenLabsAPI[ElevenLabs Conversational AI]
+        EmotionAPI[Emotion Analysis API]
     end
 
     %% Frontend Interactions
-    RNApp -- Renders --> UI
-    RNApp -- Uses --> StateMgmt
-    RNApp -- Uses --> APIClient
-    RNApp -- Renders --> ThreeJS
+    WebApp -- Renders --> UI
+    WebApp -- Uses --> StateMgmt
+    WebApp -- Uses --> APIClient
+    WebApp -- Uses --> WebSpeech
+    WebApp -- Uses --> WebAudio
     
     %% API Interactions
-    APIClient -- HTTP Requests --> NodeAPI
+    APIClient -- HTTP/WebSocket --> ExpressAPI
     
     %% Backend Interactions
-    NodeAPI -- Uses --> MemoryManager
-    NodeAPI -- Uses --> ClaudeClient
-    NodeAPI -- Uses --> VoiceService
+    ExpressAPI -- Uses --> ConversationManager
+    ExpressAPI -- Uses --> ElevenLabsClient
+    ExpressAPI -- Uses --> EmotionService
+    ExpressAPI -- Uses --> ProactiveEngine
     
     %% Database Interactions
-    MemoryManager -- Short-term Memory --> Redis
-    MemoryManager -- Long-term Memory --> Pinecone
-    NodeAPI -- Persistent Storage --> MongoDB
+    ConversationManager -- Persistent Storage --> MongoDB
+    ProactiveEngine -- Reads/Writes --> MongoDB
     
     %% External Service Interactions
-    ClaudeClient -- HTTPS Requests --> ClaudeAPI
-    VoiceService -- Text-to-Speech --> ElevenLabsAPI
-    VoiceService -- Speech-to-Text --> DeepgramAPI
+    ElevenLabsClient -- HTTPS Requests --> ElevenLabsAPI
+    EmotionService -- HTTPS Requests --> EmotionAPI
 ```
 
 ## Core Components
 
 ### Frontend Components
 
-1. **React Native App**: The main tablet application that provides the user interface.
+1. **React Web App**: The main web application that provides the user interface.
    - Handles user interactions and displays AI responses
    - Manages application state and navigation
-   - Renders the visual companion
+   - Provides responsive design for various devices
 
-2. **UI Components**: Built with React Native Paper for accessibility.
+2. **UI Components**: Built with React and Tailwind CSS for accessibility.
    - High-contrast, elder-friendly interface
-   - Responsive design for various tablet sizes
+   - Responsive design for desktop and tablet
    - Accessibility features for hearing, vision, and motor limitations
 
-3. **State Management**: Uses Redux Toolkit to manage application state.
+3. **State Management**: Uses React Context or Redux to manage application state.
    - Stores conversation history
    - Manages UI state (listening, thinking, speaking)
    - Handles asynchronous operations
@@ -85,68 +84,64 @@ graph TB
 4. **API Client**: Communicates with the backend server.
    - Sends user messages to the API
    - Receives AI responses
-   - Handles audio streaming for voice interactions
+   - Handles WebSocket connections for real-time updates
 
-5. **Visual Companion**: Three.js-based visualization.
-   - Provides visual feedback during conversations
-   - Displays memory timelines and family photos
-   - Creates an engaging, ambient presence
+5. **Web Speech API**: Handles browser-based speech recognition.
+   - Converts user speech to text
+   - Provides interim results for responsive feedback
+   - Supports multiple languages
+
+6. **Web Audio API**: Manages audio processing and playback.
+   - Plays synthesized speech from ElevenLabs
+   - Handles audio visualization
+   - Manages audio input for speech recognition
 
 ### Backend Components
 
 1. **Express API Server**: The main entry point for the backend.
    - Handles HTTP requests from the frontend
+   - Manages WebSocket connections for real-time communication
    - Routes requests to appropriate services
-   - Manages session state
 
-2. **Memory Manager**: Coordinates the two-tier memory system.
-   - Manages short-term memory in Redis
-   - Handles long-term memory in Pinecone
-   - Retrieves relevant context for conversations
+2. **Conversation Manager**: Handles conversation flow and context.
+   - Manages conversation sessions
+   - Stores conversation history
+   - Provides context for ongoing conversations
 
-3. **Claude API Client**: Interfaces with Anthropic's Claude API.
-   - Sends user messages with context to Claude
+3. **ElevenLabs Client**: Interfaces with ElevenLabs Conversational AI.
+   - Sends user messages to ElevenLabs
    - Processes AI responses
-   - Handles prompt engineering and context management
+   - Handles voice synthesis requests
 
-4. **Voice Service**: Manages speech processing.
-   - Converts speech to text using Deepgram
-   - Synthesizes speech from text using ElevenLabs
-   - Optimizes voice for elderly users
+4. **Emotion Detection Service**: Analyzes user emotional state.
+   - Processes voice and text for emotional cues
+   - Categorizes emotions (happiness, sadness, etc.)
+   - Provides emotional context for responses
 
-### Database Components
+5. **Proactive Engagement Engine**: Manages conversation initiation.
+   - Determines appropriate times to initiate conversation
+   - Selects topics based on user preferences and emotional state
+   - Schedules and triggers proactive interactions
+
+### Database Component
 
 1. **MongoDB**: Primary database for persistent storage.
    - Stores user profiles and preferences
-   - Manages session information
-   - Logs conversation metadata
-
-2. **Redis**: In-memory database for short-term memory.
-   - Stores recent conversation history
-   - Caches frequently accessed data
-   - Manages session state
-
-3. **Pinecone**: Vector database for long-term memory.
-   - Stores conversation embeddings for semantic search
-   - Enables retrieval of relevant past conversations
-   - Supports memory categorization and prioritization
+   - Manages conversation history
+   - Logs emotional states and engagement metrics
+   - Stores proactive engagement settings
 
 ### External Services
 
-1. **Anthropic Claude API**: Large language model for conversation.
+1. **ElevenLabs Conversational AI**: Core AI service for conversation.
    - Generates natural, empathetic responses
-   - Handles complex conversation context
-   - Provides consistent personality and tone
+   - Provides voice synthesis capabilities
+   - Handles conversation context
 
-2. **ElevenLabs API**: Text-to-speech service.
-   - Converts AI responses to natural speech
-   - Provides emotionally appropriate voice synthesis
-   - Optimized for elderly hearing
-
-3. **Deepgram API**: Speech-to-text service.
-   - Converts user speech to text
-   - Handles aging voice patterns and accents
-   - Optimized for elder speech recognition
+2. **Emotion Analysis API**: Service for emotion detection.
+   - Analyzes voice patterns for emotional cues
+   - Processes text for sentiment and emotion
+   - Provides confidence scores for detected emotions
 
 ## Data Flow
 

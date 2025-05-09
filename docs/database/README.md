@@ -1,16 +1,15 @@
 # Ambi Database Design
 
-This document provides a comprehensive overview of the database architecture used in the Ambi system. Ambi uses a multi-database approach to efficiently handle different types of data and access patterns.
+This document provides an overview of the database architecture used in the Ambi web-based proof of concept (POC). Ambi uses MongoDB as its primary database for storing user data, conversation history, and emotional analytics.
 
 ## Database Architecture Overview
 
-Ambi employs three different database technologies, each serving a specific purpose:
+Ambi employs MongoDB as its primary database technology, serving the following purposes:
 
-1. **MongoDB**: Primary database for persistent storage of user data, profiles, and metadata
-2. **Redis**: In-memory database for short-term memory and caching
-3. **Pinecone**: Vector database for long-term semantic memory storage
-
-This architecture enables Ambi to efficiently handle both structured data and unstructured conversation data with semantic search capabilities.
+1. **User Management**: Storage of user profiles, preferences, and settings
+2. **Conversation History**: Record of past conversations and interactions
+3. **Emotion Tracking**: Storage of detected emotions and emotional trends
+4. **Proactive Engagement**: Configuration for AI-initiated conversations
 
 ## MongoDB
 

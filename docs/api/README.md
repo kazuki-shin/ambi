@@ -1,6 +1,6 @@
 # Ambi API Documentation
 
-This document provides comprehensive documentation for the Ambi API, which enables communication between the frontend application and the backend services.
+This document provides comprehensive documentation for the Ambi API, which enables communication between the web frontend application and the backend services.
 
 ## API Overview
 
@@ -8,18 +8,20 @@ The Ambi API is a RESTful API built with Express.js that provides endpoints for:
 
 1. **Conversation**: Text-based interaction with the AI
 2. **Voice Conversation**: Voice-based interaction with the AI
-3. **Health Check**: System status verification
+3. **Emotion Analysis**: Detection and tracking of user emotions
+4. **Proactive Engagement**: Management of AI-initiated conversations
+5. **Health Check**: System status verification
 
 All API endpoints are prefixed with `/api` except for the health check endpoint.
 
 ## Base URL
 
 - **Development**: `http://localhost:4000`
-- **Production**: Depends on deployment environment
+- **Production**: `https://ambi-api.fly.dev`
 
 ## Authentication
 
-Authentication is not implemented in the current version but will be added in future releases.
+Authentication is not implemented in the current POC version but will be added in future releases.
 
 ## API Endpoints
 
@@ -53,7 +55,11 @@ Sends a text message to the AI and receives a text response.
 {
   "message": "Hello, how are you today?",
   "userId": "user123",
-  "sessionId": "session456"
+  "sessionId": "session456",
+  "emotionData": {
+    "emotion": "neutral",
+    "confidence": 0.85
+  }
 }
 ```
 
@@ -62,6 +68,7 @@ Sends a text message to the AI and receives a text response.
 | `message` | string | Yes | The user's message to the AI |
 | `userId` | string | No | Unique identifier for the user |
 | `sessionId` | string | No | Unique identifier for the conversation session |
+| `emotionData` | object | No | Emotion data detected from the user's input |
 
 #### Response
 
@@ -77,40 +84,7 @@ Sends a text message to the AI and receives a text response.
 |-------|------|-------------|
 | `reply` | string | The AI's text response |
 | `sessionId` | string | Unique identifier for the conversation session |
-| `audioReply` | string | Base64-encoded audio of the AI's response (only if `INTERACTION_MODE` is set to `voice`) |
-
-#### Implementation
-
-```typescript
-// From backend/src/index.ts
-app.post('/api/conversation', async (req: Request, res: Response) => {
-  const interactionMode = process.env.INTERACTION_MODE === 'text' ? 'text' : 'voice'; 
-
-  const { message, userId, sessionId } = req.body as ConversationRequest;
-  const currentSessionId = sessionId || `session_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-  
-  await getRecentHistory(currentSessionId);
-  
-  const ambiReply = await getClaudeResponse(message, currentSessionId);
-  
-  await addToMemory(currentSessionId, message, ambiReply);
-
-  let audioReplyBase64: string | null = null;
-  if (interactionMode === 'voice') {
-    const audioBuffer = await voiceService.textToSpeech.synthesize(ambiReply);
-    if (audioBuffer) {
-      audioReplyBase64 = audioBuffer.toString('base64');
-    }
-  }
-
-  const response: ConversationResponse & { audioReply?: string | null } = {
-    reply: ambiReply,
-    sessionId: currentSessionId,
-    audioReply: audioReplyBase64
-  };
-  res.json(response);
-});
-```
+| `audioReply` | string | Base64-encoded audio of the AI's response |
 
 ### Voice Conversation
 
@@ -134,7 +108,11 @@ Sends an audio message to the AI and receives both text and audio responses.
 {
   "audioReply": "base64EncodedAudioData",
   "textReply": "I'm doing well, thank you for asking! How are you feeling today?",
-  "sessionId": "session456"
+  "sessionId": "session456",
+  "detectedEmotion": {
+    "emotion": "happy",
+    "confidence": 0.78
+  }
 }
 ```
 
@@ -143,6 +121,7 @@ Sends an audio message to the AI and receives both text and audio responses.
 | `audioReply` | string | Base64-encoded audio of the AI's response |
 | `textReply` | string | The AI's text response |
 | `sessionId` | string | Unique identifier for the conversation session |
+| `detectedEmotion` | object | Emotion detected from the user's voice |
 
 #### Implementation
 
