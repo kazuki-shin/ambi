@@ -1,6 +1,6 @@
 # Ambi Implementation Plan
 
-This document outlines the step-by-step implementation plan for the Ambi web-based proof of concept (POC) based on the new product requirements document (prd-new.md). This plan can be used to create tickets and track progress during implementation.
+This document outlines the step-by-step implementation plan for the Ambi web-based proof of concept (POC) based on the product requirements document (prd.md). This plan can be used to create tickets and track progress during implementation.
 
 ## Overview
 

@@ -4,7 +4,7 @@ Welcome to the Ambi documentation. This documentation provides comprehensive inf
 
 ## Documentation Structure
 
-- [Product Requirements](./prd-new.md): Detailed product requirements and specifications
+- [Product Requirements](./prd.md): Detailed product requirements and specifications
 - [Implementation Plan](./implementation-plan.md): Step-by-step implementation plan for future tickets
 - [System Architecture](./system-architecture/README.md): Explanation of the system components and their interactions
 - [Database Design](./database/README.md): Documentation of the database structure and data flow
