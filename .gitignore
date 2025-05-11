@@ -30,3 +30,5 @@ coverage/
 
 # Cursor specific (if not already in .cursorignore)
 # .cursor/ 
+
+example-ui/
