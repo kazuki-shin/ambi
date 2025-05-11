@@ -151,7 +151,7 @@ export function AmbiOSConversation() {
             <img
               src={currentAvatar}
               alt="Companion Avatar"
-              className="fixed bottom-0 left-1/2 w-150 h-150 object-contain mb-8 z-10 transition-transform duration-1000 ease-in-out" // Added transition classes
+              className="fixed bottom-0 left-1/2 w-[clamp(300px,80vw,1000px)] h-[clamp(350px,60vh,650px)] object-contain mb-8 z-10 transition-transform duration-1000 ease-in-out" // Adjusted to be a bit smaller
               style={{ transform: `translateX(calc(-50% + ${horizontalOffset}px))` }} // Apply dynamic offset and base centering translation
             />
 
