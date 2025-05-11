@@ -1,0 +1,42 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+          cache: 'npm' # Cache npm dependencies
+
+      - name: Install dependencies
+        run: npm ci
+        # To be fully implemented later
+
+      - name: Run linters
+        run: echo "Linting step placeholder"
+        # To be implemented: npm run lint
+
+      - name: Run tests
+        run: echo "Testing step placeholder"
+        # To be implemented: npm test
+
+      - name: Build applications
+        run: echo "Build step placeholder"
+        # To be implemented: npm run build --workspaces --if-present
+
+      - name: Deploy to Fly.io
+        run: echo "Deploy to Fly.io placeholder"
+        # To be implemented: flyctl deploy --remote-only
+        # env:
+        #   FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }} 

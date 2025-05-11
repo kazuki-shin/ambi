@@ -1,0 +1,43 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Agent Session Initialization: Documentation and Codebase Analysis Protocol
+
+## Critical Rules
+
+- At the start of each new agent session, automatically access and parse all files within the `docs/` directory.
+- Prioritize analysis of Product Requirement Documents (PRDs) and Implementation Plans found in `docs/`.
+- Perform static analysis of the current codebase to understand its structure and implemented features.
+- Correlate information from documentation (requirements, planned features) with the actual state of the codebase.
+- Identify and list:
+  - Implemented features.
+  - Pending features from documentation.
+  - Discrepancies or gaps between documentation and codebase.
+- Determine logical next development steps based on this analysis.
+- Synthesize findings into an initial actionable summary for the user, including:
+  - Priority tasks.
+  - Potential technical challenges.
+  - Recommended implementation approaches, considering existing codebase patterns.
+- This entire process must complete before engaging in the first interaction with the user in the new session.
+
+## Examples
+
+<example>
+  Agent (on new session): "Hello! I've analyzed the project documentation in `docs/` and the current codebase.
+  Current Status:
+  - Phase 1.3 (Frontend Foundation) appears complete.
+  - PRD specifies X, Y, Z features for Phase 2.
+  Identified Gaps:
+  - Feature X (Emotion Detection - Voice Analysis) from Week 4 is not yet implemented.
+  Next Steps:
+  - Recommend starting with `docs/implementation-plan.md` task 4.1: Integrate voice emotion detection API.
+  - Potential challenge: Selecting a suitable voice emotion detection API compatible with ElevenLabs.
+  How can I assist you with this?"
+</example>
+
+<example type="invalid">
+  Agent (on new session): "Hello! How can I help you today?"
+  (Agent has not performed any pre-analysis of docs or code and is waiting for user direction without initial context.)
+</example>
