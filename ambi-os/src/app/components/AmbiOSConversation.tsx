@@ -1,11 +1,9 @@
 "use client";
 
-import { Button } from "@/components/ui/button"; // Assuming this path is correct for ambi-os
 import * as React from "react";
-import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"; // Assuming this path is correct for ambi-os
+import { useEffect, useState, useCallback } from "react";
 import { useConversation } from "@11labs/react"; // This will likely need to be updated if you have a custom hook for Ambi OS
-import { cn } from "@/lib/utils"; // Assuming this path is correct for ambi-os
+import Image from "next/image";
 
 async function requestMicrophonePermission() {
   try {
@@ -28,7 +26,6 @@ async function getSignedUrl(): Promise<string> {
 }
 
 export function AmbiOSConversation() {
-  const [isMuted, setIsMuted] = useState(false);
   const [currentAvatar, setCurrentAvatar] = useState("/avatar-states/idle.png"); // Default avatar
   const [hasError, setHasError] = useState(false); // New state for error
   const [horizontalOffset, setHorizontalOffset] = useState(0); // State for horizontal movement
@@ -54,7 +51,7 @@ export function AmbiOSConversation() {
     },
   });
 
-  async function startConversation() {
+  const startConversation = useCallback(async () => {
     const hasPermission = await requestMicrophonePermission();
     if (!hasPermission) {
       alert("Microphone access was denied. Please enable it in your browser settings.");
@@ -68,7 +65,7 @@ export function AmbiOSConversation() {
       console.error("Failed to start Ambi OS conversation:", error);
       alert("Could not start the Ambi OS conversation. Please check the console for details.");
     }
-  }
+  }, [conversation]);
 
   useEffect(() => {
     startConversation();
@@ -79,7 +76,7 @@ export function AmbiOSConversation() {
         console.log("Ambi OS Conversation ended on unmount.");
       }
     };
-  }, []);
+  }, [conversation, startConversation]);
 
   useEffect(() => {
     // Logic to update avatar based on conversation state
@@ -122,11 +119,6 @@ export function AmbiOSConversation() {
     };
   }, []); // Runs once on mount
 
-  const toggleMute = () => {
-    setIsMuted(!isMuted);
-    console.log(isMuted ? "Unmuting Ambi OS" : "Muting Ambi OS");
-  };
-
   return (
     <div className={"flex justify-center items-center min-h-screen min-w-full"}> {/* Ensure container takes full viewport */}
       {/* Card and other text elements will be removed or hidden */}
@@ -148,11 +140,13 @@ export function AmbiOSConversation() {
             </div>
           </CardHeader>
           <div className={"flex flex-col gap-y-6 items-center"}> */}
-            <img
+            <Image
               src={currentAvatar}
               alt="Companion Avatar"
-              className="fixed bottom-0 left-1/2 w-[clamp(300px,80vw,1000px)] h-[clamp(350px,60vh,650px)] object-contain mb-8 z-10 transition-transform duration-1000 ease-in-out drop-shadow-[3px_10px_10px_rgba(0,0,0,0.50)]" // Shadow more to bottom-right, less diffuse
-              style={{ transform: `translateX(calc(-50% + ${horizontalOffset}px))` }} // Apply dynamic offset and base centering translation
+              fill
+              priority
+              style={{ objectFit: "contain", transform: `translateX(calc(-50% + ${horizontalOffset}px))` }} // Apply dynamic offset and base centering translation
+              className="fixed bottom-0 left-1/2 w-[clamp(300px,80vw,1000px)] h-[clamp(350px,60vh,650px)] mb-8 z-10 transition-transform duration-1000 ease-in-out drop-shadow-[3px_10px_10px_rgba(0,0,0,0.50)]" // Shadow more to bottom-right, less diffuse
             />
 
             {/* {conversation.status === "connected" && !hasError && (
