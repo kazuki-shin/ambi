@@ -29,16 +29,24 @@ async function getSignedUrl(): Promise<string> {
 
 export function AmbiOSConversation() {
   const [isMuted, setIsMuted] = useState(false);
+  const [currentAvatar, setCurrentAvatar] = useState("/avatar-states/idle.png"); // Default avatar
+  const [hasError, setHasError] = useState(false); // New state for error
+
   const conversation = useConversation({
     onConnect: () => {
       console.log("connected");
+      setHasError(false); // Reset error on new connection
+      // setCurrentAvatar("/avatar-states/listening.png"); // Set in useEffect
     },
     onDisconnect: () => {
       console.log("disconnected");
+      // setCurrentAvatar("/avatar-states/idle.png"); // Set in useEffect
     },
     onError: error => {
       console.log(error);
       alert("An error occurred during the conversation");
+      setHasError(true);
+      // setCurrentAvatar("/avatar-states/error.png"); // Set in useEffect
     },
     onMessage: message => {
       console.log(message);
@@ -72,45 +80,54 @@ export function AmbiOSConversation() {
     };
   }, []);
 
+  useEffect(() => {
+    // Logic to update avatar based on conversation state
+    if (hasError) {
+      setCurrentAvatar("/avatar-states/error.png");
+    } else if (conversation.status === "connected") {
+      if (conversation.isSpeaking) {
+        setCurrentAvatar("/avatar-states/speaking.png");
+      } else {
+        setCurrentAvatar("/avatar-states/listening.png");
+      }
+    } else { // Disconnected or other states like "connecting", "error" (handled by hasError)
+      setCurrentAvatar("/avatar-states/idle.png");
+    }
+  }, [conversation.status, conversation.isSpeaking, hasError]);
+
   const toggleMute = () => {
     setIsMuted(!isMuted);
     console.log(isMuted ? "Unmuting Ambi OS" : "Muting Ambi OS");
   };
 
   return (
-    <div className={"flex justify-center items-center gap-x-4"}>
-      <Card className={"rounded-3xl"}>
-        <CardContent className="pt-6"> {/* Added pt-6 for padding like in many Card examples */}
-          <CardHeader className="p-4"> {/* Adjusted padding */}
-            <CardTitle className={"text-center text-xl mb-4"}> {/* Adjusted text size and margin */}
+    <div className={"flex justify-center items-center min-h-screen min-w-full"}> {/* Ensure container takes full viewport */}
+      {/* Card and other text elements will be removed or hidden */}
+      {/* <Card className={"rounded-3xl"}>
+        <CardContent className="pt-6">
+          <CardHeader className="p-4">
+            <CardTitle className={"text-center text-xl mb-4"}>
               Ambi OS Status
             </CardTitle>
-            <div className="text-center text-lg"> {/* Wrapper for status message for better control */}
-              {conversation.status === "connected"
+            <div className="text-center text-lg">
+              {hasError ? "Error - Please check connection or permissions" :
+                conversation.status === "connected"
                 ? conversation.isSpeaking
                   ? `Ambi OS is speaking`
                   : "Ambi OS is listening"
+                : conversation.status === "connecting"
+                ? "Ambi OS Connecting..."
                 : "Ambi OS Disconnected"}
             </div>
           </CardHeader>
-          <div className={"flex flex-col gap-y-6 items-center"}> {/* Increased gap and centered items */}
-            <div
-              className={cn(
-                "orb my-12 mx-auto w-24 h-24", // Centered orb and defined size
-                conversation.status === "connected" && conversation.isSpeaking
-                  ? "orb-active animate-orb"
-                  : conversation.status === "connected"
-                  ? "animate-orb-slow orb-inactive"
-                  : "orb-inactive"
-              )}
-              style={{ // Basic orb styling, assuming CSS for orb, orb-active, animate-orb etc. exists
-                borderRadius: '50%',
-                backgroundColor: '#ddd', // Default inactive color
-                transition: 'background-color 0.5s ease',
-              }}
-            ></div>
+          <div className={"flex flex-col gap-y-6 items-center"}> */}
+            <img
+              src={currentAvatar}
+              alt="Companion Avatar"
+              className="w-screen h-screen object-contain" // Make image fill screen
+            />
 
-            {conversation.status === "connected" && (
+            {/* {conversation.status === "connected" && !hasError && (
               <Button
                 variant={"outline"}
                 className={"rounded-full w-full max-w-xs mt-4"} 
@@ -119,10 +136,10 @@ export function AmbiOSConversation() {
               >
                 {isMuted ? "Unmute Ambi OS" : "Mute Ambi OS"}
               </Button>
-            )}
-          </div>
+            )} */}
+          {/* </div>
         </CardContent>
-      </Card>
+      </Card> */}
     </div>
   );
 } 
