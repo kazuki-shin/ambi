@@ -124,7 +124,7 @@ export function AmbiOSConversation() {
             <img
               src={currentAvatar}
               alt="Companion Avatar"
-              className="w-screen h-screen object-contain" // Make image fill screen
+              className="fixed bottom-0 left-1/2 -translate-x-1/2 w-150 h-150 object-contain mb-8 z-10" // Centered, bottom, smaller, with z-index and margin
             />
 
             {/* {conversation.status === "connected" && !hasError && (
