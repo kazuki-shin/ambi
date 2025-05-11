@@ -31,6 +31,7 @@ export function AmbiOSConversation() {
   const [isMuted, setIsMuted] = useState(false);
   const [currentAvatar, setCurrentAvatar] = useState("/avatar-states/idle.png"); // Default avatar
   const [hasError, setHasError] = useState(false); // New state for error
+  const [horizontalOffset, setHorizontalOffset] = useState(0); // State for horizontal movement
 
   const conversation = useConversation({
     onConnect: () => {
@@ -95,6 +96,32 @@ export function AmbiOSConversation() {
     }
   }, [conversation.status, conversation.isSpeaking, hasError]);
 
+  useEffect(() => {
+    let timeoutId: number | undefined;
+
+    const moveAvatar = () => {
+      // Decide if to move (e.g., 60% chance)
+      if (Math.random() < 0.6) {
+        const newOffset = (Math.random() - 0.5) * 80; // Range -40px to +40px
+        setHorizontalOffset(newOffset);
+      }
+
+      // Random interval for next move attempt (e.g., 3 to 7 seconds for decision, plus 1s for animation)
+      const randomInterval = Math.random() * 4000 + 3000;
+      timeoutId = setTimeout(moveAvatar, randomInterval) as unknown as number;
+    };
+
+    // Start the first move attempt after an initial delay
+    const initialDelay = Math.random() * 2000 + 1000; // 1 to 3 seconds
+    timeoutId = setTimeout(moveAvatar, initialDelay) as unknown as number;
+
+    return () => {
+      if (timeoutId !== undefined) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, []); // Runs once on mount
+
   const toggleMute = () => {
     setIsMuted(!isMuted);
     console.log(isMuted ? "Unmuting Ambi OS" : "Muting Ambi OS");
@@ -124,7 +151,8 @@ export function AmbiOSConversation() {
             <img
               src={currentAvatar}
               alt="Companion Avatar"
-              className="fixed bottom-0 left-1/2 -translate-x-1/2 w-150 h-150 object-contain mb-8 z-10" // Centered, bottom, smaller, with z-index and margin
+              className="fixed bottom-0 left-1/2 w-150 h-150 object-contain mb-8 z-10 transition-transform duration-1000 ease-in-out" // Added transition classes
+              style={{ transform: `translateX(calc(-50% + ${horizontalOffset}px))` }} // Apply dynamic offset and base centering translation
             />
 
             {/* {conversation.status === "connected" && !hasError && (
