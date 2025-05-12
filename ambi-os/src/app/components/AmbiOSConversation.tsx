@@ -3,7 +3,6 @@
 import { Button } from "@/components/ui/button"; // Assuming this path is correct for ambi-os
 import * as React from "react";
 import { useEffect, useState, useRef } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"; // Assuming this path is correct for ambi-os
 import { useConversation } from "@11labs/react"; // This will likely need to be updated if you have a custom hook for Ambi OS
 
 async function requestMicrophonePermission() {
@@ -172,23 +171,21 @@ export function AmbiOSConversation() {
 
   return (
     <div className={"flex justify-center items-center min-h-screen min-w-full"}>
-      <Card className={"rounded-3xl"}>
-        <CardContent className="pt-6">
-          <CardHeader className="p-4">
-            <CardTitle className={"text-center text-xl mb-4"}>
-              Ambi OS Status
-            </CardTitle>
-            <div className="text-center text-lg">
-              {hasError ? "Error - Please check connection or permissions" :
-                conversation.status === "connected"
-                ? conversation.isSpeaking
-                  ? `Ambi OS is speaking`
-                  : "Ambi OS is listening"
-                : conversation.status === "connecting"
-                ? "Ambi OS Connecting..."
-                : "Ambi OS Disconnected"}
-            </div>
-          </CardHeader>
+      <div className="pt-6">
+        <div className="p-4">
+          <div className={"text-center text-xl mb-4"}>
+            Ambi OS Status
+          </div>
+          <div className="text-center text-lg">
+            {hasError ? "Error - Please check connection or permissions" :
+              conversation.status === "connected"
+              ? conversation.isSpeaking
+                ? `Ambi OS is speaking`
+                : "Ambi OS is listening"
+              : conversation.status === "connecting"
+              ? "Ambi OS Connecting..."
+              : "Ambi OS Disconnected"}
+          </div>
           <div className={"flex flex-col gap-y-6 items-center"}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -209,8 +206,8 @@ export function AmbiOSConversation() {
               </Button>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 } 
